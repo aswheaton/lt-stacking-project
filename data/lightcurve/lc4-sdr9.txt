@@ -1,0 +1,2 @@
+# name  MJD     g     gerr r     rerr u     uerr g-r    gre u-g    uge   comment
+94511 53439.2617 22.251 0.094 21.69 0.109 23.203 0.435 0.560999 0.14393401 0.952 0.44504045   SDSS-GAL

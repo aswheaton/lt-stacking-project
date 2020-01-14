@@ -1,0 +1,3 @@
+# code name MJD  g gerr r rerr u uerr comment 
+2B3Fadn J094511 55197.0 22.31 0.0  21.7  0.0  23.7  0.0  sdss-gal
+2B3Fadn J094511 55964.0 0.0   0.0  0.0   0.0  0.0   0.0  PS1-flag
