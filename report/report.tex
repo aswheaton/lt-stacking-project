@@ -34,6 +34,11 @@
 \usepackage{caption} % Captions for single images.
 \usepackage{subcaption} % Captions for simultaneous images.
 
+% Not sure what this is for. %
+
+\usepackage{fullpage,epsf}
+\usepackage{lipsum}
+
 % Some utilities for scientific and mathematical writing. %
 
 \usepackage{siunitx} % Formatting for numbers with SI units.
@@ -89,18 +94,60 @@
 
 \begin{document}
 
-\maketitle
+\pagestyle{empty}                       % No numbers of title page
+\epsfxsize=40mm                         % Size of crest
+\begin{minipage}[b]{110mm}
+    {\Huge\bf School of Physics\\ and Astronomy
+    \vspace*{17mm}}
+\end{minipage}
+\hfill
+\begin{minipage}[t]{40mm}
+    \makebox[40mm]{
+    \includegraphics[width=40mm]{img/crest.eps}}
+\end{minipage}
+\par\noindent                                           % Centre Title, and name
+\vspace*{2cm}
+\begin{center}
+    \Large\bf \Large\bf Senior Honours Project\\
+    \Large\bf Astrophysics\\[10pt]                     % Change to MP/CP/Astro
+    \LARGE\bf Deep Stacking of AGN Hypervariables
+\end{center}
+\vspace*{0.5cm}
+\begin{center}
+    \bf Alexander S. Wheaton\\
+    \today
+\end{center}
+\vspace*{5mm}
 
 \begin{abstract}
+        \lipsum[1]
 \end{abstract}
 
-\section{Preliminary}
-\section{Introduction}
-\section{Method}
-\section{Results and Analysis}
-\section{Discussion}
-\section{Conclusion}
+\vspace*{1cm}
 
-\printbibliography
+\subsubsection*{Declaration}
+\begin{quotation}
+        I declare that this project and report is my own work.
+\end{quotation}
+
+%\vspace*{2cm}
+Signature:\hspace*{8cm}Date: \today
+
+\vfill
+{\bf Supervisor:} Professor A. Lawrence, FRSE, FRaS
+\hfill
+12 Weeks
+
+% \newpage
+% \setcounter{page}{1}                            % Set page number to 1
+% \tableofcontents                                % Makes Table of Contents
+% \section{Preliminary}
+% \section{Introduction}
+% \section{Method}
+% \section{Results and Analysis}
+% \section{Discussion}
+% \section{Conclusion}
+%
+% \printbibliography
 
 \end{document}

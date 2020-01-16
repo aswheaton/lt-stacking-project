@@ -133,3 +133,4 @@ dmypy.json
 *.aux
 *.log
 *.run.xml
+*.toc
