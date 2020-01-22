@@ -33,6 +33,26 @@ CROTA1  =            90.361783 / [degrees]
 CROTA2  =            90.361783 / [degrees]
 """
 
+def weighted_mean_2D(array):
+    """
+        Recieves an argument of type ndarray and returns a tuple of the weighted
+        mean centroid of the object.
+    """
+    x_sum = np.sum(array, axis=0)
+    y_sum = np.sum(array, axis=1)
+    print(x_sum)
+    print(y_sum)
+    x_avg = np.average(range(x_sum.size), weights=x_sum)
+    y_avg = np.average(range(y_sum.size), weights=y_sum)
+    # x_avg = 0.0
+    # for i in range(len(x_sum)):
+    #     x_avg += float(i) * x_sum[i] / np.sum(x_sum)
+    # y_avg = 0.0
+    # for j in range(len(y_sum)):
+    #     y_avg += float(j) * x_sum[j] / np.sum(y_sum)
+
+    return((x_avg, y_avg))
+
 image_2012_r = fits.open("data/fits/20120312_39_R100.fits")[0].data
 image_2012_g = fits.open("data/fits/20120312_38_G100.fits")[0].data
 image_2012_b = fits.open("data/fits/20120312_40_U300.fits")[0].data
@@ -67,6 +87,8 @@ plt.show()
 
 image_stack = image_2012_r + image_2012_g + image_2012_b
 
-plt.imshow(np.rot90(image_stack, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
+print(weighted_mean_2D(image_stack))
+
+plt.imshow(np.rot90(image_stack, k=1)[495:505,495:505], cmap='viridis', origin='lower', norm=LogNorm())
 plt.colorbar()
 plt.show()
