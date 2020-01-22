@@ -1,6 +1,8 @@
+import matplotlib.pyplot as plt
 from astropy.io import fits
 import numpy as np
 
-data = fits.open("data/fits/20120312_38_G100.fits")
-data.info()
-print(np.array(data[0]))
+hdul = fits.open("data/fits/20120312_38_G100.fits")
+hdul.info()
+plt.imshow(hdul[0].data)
+plt.show()
