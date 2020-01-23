@@ -33,62 +33,77 @@ CROTA1  =            90.361783 / [degrees]
 CROTA2  =            90.361783 / [degrees]
 """
 
-def weighted_mean_2D(array):
+def plot():
+
+    from matplotlib.colors import LogNorm
+
+    figure, ax_array = plt.subplots(2,3)
+    ax_array[0,0].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
+    ax_array[0,1].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
+    ax_array[0,2].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
+    ax_array[1,0].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
+    ax_array[1,1].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
+    ax_array[1,2].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
+    plt.show()
+
+def rgb(image_r, image_g, image_b):
+    """
+        Recieves three arrays of equal size. Maps these values to RGB values
+        using the Lupton algorithm and displays the resulting image.
+        # TODO: Retrieve the source for this algorithm.
+    """
+    from astropy.visualization import make_lupton_rgb
+    rgb_image = make_lupton_rgb(image_r, image_g, image_b, Q=10, stretch=1000.)
+    plt.imshow(image)
+    plt.show()
+
+def weighted_mean_2D(cutout,**kwargs):
     """
         Recieves an argument of type ndarray and returns a tuple of the weighted
-        mean centroid of the object.
+        mean centroid of the object contained in the cutout.
     """
-    x_sum = np.sum(array, axis=0)
-    y_sum = np.sum(array, axis=1)
-    print(x_sum)
-    print(y_sum)
+    x_sum = np.sum(cutout, axis=0)
+    y_sum = np.sum(cutout, axis=1)
     x_avg = np.average(range(x_sum.size), weights=x_sum)
     y_avg = np.average(range(y_sum.size), weights=y_sum)
-    # x_avg = 0.0
-    # for i in range(len(x_sum)):
-    #     x_avg += float(i) * x_sum[i] / np.sum(x_sum)
-    # y_avg = 0.0
-    # for j in range(len(y_sum)):
-    #     y_avg += float(j) * x_sum[j] / np.sum(y_sum)
+    if kwargs.get("floor") == True:
+        return((np.floor(x_avg), np.floor(y_avg)))
+    else:
+        return((x_avg, y_avg))
 
-    return((x_avg, y_avg))
+image_2012_r = fits.open("data/fits/20120312_39_R100.fits")[0].data[475:525,475:525]
+image_2012_g = fits.open("data/fits/20120312_38_G100.fits")[0].data[475:525,475:525]
+image_2012_b = fits.open("data/fits/20120312_40_U300.fits")[0].data[475:525,475:525]
+image_2017_r = fits.open("data/fits/20170314_20_R.fits")[0].data[475:525,475:525]
+image_2017_g = fits.open("data/fits/20170314_19_G.fits")[0].data[475:525,475:525]
+image_2017_b = fits.open("data/fits/20170314_21_U.fits")[0].data[475:525,475:525]
 
-image_2012_r = fits.open("data/fits/20120312_39_R100.fits")[0].data
-image_2012_g = fits.open("data/fits/20120312_38_G100.fits")[0].data
-image_2012_b = fits.open("data/fits/20120312_40_U300.fits")[0].data
-image_2017_r = fits.open("data/fits/20170314_20_R.fits")[0].data
-image_2017_g = fits.open("data/fits/20170314_19_G.fits")[0].data
-image_2017_b = fits.open("data/fits/20170314_21_U.fits")[0].data
+images_2012 = [image_2012_r,image_2012_g,image_2012_b]
+images_2017 = [image_2017_r,image_2017_g,image_2017_b]
 
-# hdul = fits.open("data/fits/20120312_38_G100.fits")
-# hdul.info()
 
-#subplot(r,c) provide the no. of rows and columns
+def align(image_stack, **kwargs):
+    """
+    Recieves a list of image arrays and some "cutout" range containing a common
+    objecct to use for alignment of the image stack.
 
-from matplotlib.colors import LogNorm
+    Returns a list of image arrays of different size, aligned, and with zero
+    borders where the image has been shifted.
+    """
 
-figure, ax_array = plt.subplots(2,3)
-ax_array[0,0].imshow(np.rot90(image_2012_r, k=1), cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[0,1].imshow(np.rot90(image_2012_r, k=1), cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[0,2].imshow(np.rot90(image_2012_r, k=1), cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[1,0].imshow(np.rot90(image_2012_r, k=1), cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[1,1].imshow(np.rot90(image_2012_r, k=1), cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[1,2].imshow(np.rot90(image_2012_r, k=1), cmap='viridis', origin='lower', norm=LogNorm())
-plt.show()
+    cutout_range = kwargs.get("cutout")
 
-figure, ax_array = plt.subplots(2,3)
-ax_array[0,0].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[0,1].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[0,2].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[1,0].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[1,1].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-ax_array[1,2].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-plt.show()
+    # Get lists of all the x and y centroids.
+    for image in image_stack:
+        x_centroids.append(weighted_mean_2D(image[cutout_range])[0]):
+        y_centroids.append(weighted_mean_2D(image[cutout_range])[1]):
+    x_ref, y_ref = x_centroids.min(), y_centroids.min()
+    x_max, y_max = x_centroids.max(), y_centroids.max()
 
-image_stack = image_2012_r + image_2012_g + image_2012_b
+    # Create new list of image arrays with offset.
+    aligned_image_stack = []
+    for image in image_stack:
+        aligned_image = np.zeros(image.size[0]+x_max, image.size[1]+y_max)
+    return(aligned_image_stack)
 
-print(weighted_mean_2D(image_stack))
-
-plt.imshow(np.rot90(image_stack, k=1)[495:505,495:505], cmap='viridis', origin='lower', norm=LogNorm())
-plt.colorbar()
-plt.show()
+# plt.imshow(np.rot90(image_stack, k=1)[495:505,495:505], cmap='viridis', origin='lower', norm=LogNorm())
