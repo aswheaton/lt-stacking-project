@@ -88,12 +88,22 @@ def align(image_stack, **kwargs):
         y_centroids.append(weighted_mean_2D(image[cutout_range])[1]):
     x_ref, y_ref = x_centroids.min(), y_centroids.min()
     x_max, y_max = x_centroids.max(), y_centroids.max()
-
+    x_max_offset = x_max - x_ref
+    y_max_offset = y_max - y_ref
     # Create new list of image arrays with offset.
     aligned_image_stack = []
     for image in image_stack:
-        aligned_image = np.zeros(image.size[0]+x_max, image.size[1]+y_max)
+        aligned_image = np.zeros(image.size[0]+x_max_offset, image.size[1]+y_max_offset)
+        x_image_offset = weighted_mean_2D(image[cutout_range])[0] - x_ref
+        y_image_offset = weighted_mean_2D(image[cutout_range])[1] - y_ref
+        aligned_image[x_image_offset:,y_image_offset:] = image
+        aligned_image_stack.append(aligned_image)
     return(aligned_image_stack)
+
+def stack(aligned_image_stack):
+    for image in aligned_image_stack:
+        stacked_image += image
+    return(stacked_image)
 
 def main():
 
