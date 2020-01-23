@@ -33,29 +33,8 @@ CROTA1  =            90.361783 / [degrees]
 CROTA2  =            90.361783 / [degrees]
 """
 
-def plot():
+def load_fits(filename):
 
-    from matplotlib.colors import LogNorm
-
-    figure, ax_array = plt.subplots(2,3)
-    ax_array[0,0].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-    ax_array[0,1].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-    ax_array[0,2].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-    ax_array[1,0].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-    ax_array[1,1].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-    ax_array[1,2].imshow(np.rot90(image_2012_r, k=1)[475:525,475:525], cmap='viridis', origin='lower', norm=LogNorm())
-    plt.show()
-
-def rgb(image_r, image_g, image_b):
-    """
-        Recieves three arrays of equal size. Maps these values to RGB values
-        using the Lupton algorithm and displays the resulting image.
-        # TODO: Retrieve the source for this algorithm.
-    """
-    from astropy.visualization import make_lupton_rgb
-    rgb_image = make_lupton_rgb(image_r, image_g, image_b, Q=10, stretch=1000.)
-    plt.imshow(image)
-    plt.show()
 
 def weighted_mean_2D(cutout,**kwargs):
     """
@@ -74,7 +53,7 @@ def weighted_mean_2D(cutout,**kwargs):
 def align(image_stack, **kwargs):
     """
     Recieves a list of image arrays and some "cutout" range containing a common
-    objecct to use for alignment of the image stack.
+    object to use for alignment of the image stack.
 
     Returns a list of image arrays of different size, aligned, and with zero
     borders where the image has been shifted.
@@ -104,6 +83,29 @@ def stack(aligned_image_stack):
     for image in aligned_image_stack:
         stacked_image += image
     return(stacked_image)
+
+def plot(image_r, image_g, image_u, cmap):
+    """
+        Recieves image arrays in three bands and plots them according to a given
+        clour map, on a log scale.
+    """
+    from matplotlib.colors import LogNorm
+    figure, ax_array = plt.subplots(1,3)
+    ax_array[0,0].imshow(image_r, cmap=cmap, origin='lower', norm=LogNorm())
+    ax_array[0,1].imshow(image_g, cmap=cmap, origin='lower', norm=LogNorm())
+    ax_array[0,2].imshow(image_u, cmap=cmap, origin='lower', norm=LogNorm())
+    plt.show()
+
+def rgb(image_r, image_g, image_b):
+    """
+        Recieves three arrays of equal size. Maps these values to RGB values
+        using the Lupton algorithm and displays the resulting image.
+        # TODO: Retrieve the source for this algorithm.
+    """
+    from astropy.visualization import make_lupton_rgb
+    rgb_image = make_lupton_rgb(image_r, image_g, image_b, Q=10, stretch=1000.)
+    plt.imshow(image)
+    plt.show()
 
 def main():
 
