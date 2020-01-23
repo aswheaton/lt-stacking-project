@@ -71,17 +71,6 @@ def weighted_mean_2D(cutout,**kwargs):
     else:
         return((x_avg, y_avg))
 
-image_2012_r = fits.open("data/fits/20120312_39_R100.fits")[0].data[475:525,475:525]
-image_2012_g = fits.open("data/fits/20120312_38_G100.fits")[0].data[475:525,475:525]
-image_2012_b = fits.open("data/fits/20120312_40_U300.fits")[0].data[475:525,475:525]
-image_2017_r = fits.open("data/fits/20170314_20_R.fits")[0].data[475:525,475:525]
-image_2017_g = fits.open("data/fits/20170314_19_G.fits")[0].data[475:525,475:525]
-image_2017_b = fits.open("data/fits/20170314_21_U.fits")[0].data[475:525,475:525]
-
-images_2012 = [image_2012_r,image_2012_g,image_2012_b]
-images_2017 = [image_2017_r,image_2017_g,image_2017_b]
-
-
 def align(image_stack, **kwargs):
     """
     Recieves a list of image arrays and some "cutout" range containing a common
@@ -106,4 +95,18 @@ def align(image_stack, **kwargs):
         aligned_image = np.zeros(image.size[0]+x_max, image.size[1]+y_max)
     return(aligned_image_stack)
 
-# plt.imshow(np.rot90(image_stack, k=1)[495:505,495:505], cmap='viridis', origin='lower', norm=LogNorm())
+def main():
+
+    image_2012_r = fits.open("data/fits/20120312_39_R100.fits")[0].data[475:525,475:525]
+    image_2012_g = fits.open("data/fits/20120312_38_G100.fits")[0].data[475:525,475:525]
+    image_2012_b = fits.open("data/fits/20120312_40_U300.fits")[0].data[475:525,475:525]
+    image_2017_r = fits.open("data/fits/20170314_20_R.fits")[0].data[475:525,475:525]
+    image_2017_g = fits.open("data/fits/20170314_19_G.fits")[0].data[475:525,475:525]
+    image_2017_b = fits.open("data/fits/20170314_21_U.fits")[0].data[475:525,475:525]
+
+    images_2012 = [image_2012_r,image_2012_g,image_2012_b]
+    images_2017 = [image_2017_r,image_2017_g,image_2017_b]
+
+    # plt.imshow(np.rot90(image_stack, k=1)[495:505,495:505], cmap='viridis', origin='lower', norm=LogNorm())
+
+main()
