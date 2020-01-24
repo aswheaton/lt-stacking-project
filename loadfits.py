@@ -33,8 +33,17 @@ CROTA1  =            90.361783 / [degrees]
 CROTA2  =            90.361783 / [degrees]
 """
 
-def load_fits(filename):
+def load_fits(**kwargs):
 
+    path = kwargs.get("path")
+    year = kwargs.get("year")
+    band = kwargs.get("band")
+
+    import os.walk as walk
+
+    root, dirs, files = os.walk(path)
+
+    
 
 def weighted_mean_2D(cutout,**kwargs):
     """
@@ -58,9 +67,7 @@ def align(image_stack, **kwargs):
     Returns a list of image arrays of different size, aligned, and with zero
     borders where the image has been shifted.
     """
-
     cutout_range = kwargs.get("cutout")
-
     # Get lists of all the x and y centroids.
     for image in image_stack:
         x_centroids.append(weighted_mean_2D(image[cutout_range])[0]):
@@ -80,6 +87,9 @@ def align(image_stack, **kwargs):
     return(aligned_image_stack)
 
 def stack(aligned_image_stack):
+    """
+        Receives a list of aligned images and returns their sum.
+    """
     for image in aligned_image_stack:
         stacked_image += image
     return(stacked_image)
@@ -87,7 +97,7 @@ def stack(aligned_image_stack):
 def plot(image_r, image_g, image_u, cmap):
     """
         Recieves image arrays in three bands and plots them according to a given
-        clour map, on a log scale.
+        colour map, on a log scale.
     """
     from matplotlib.colors import LogNorm
     figure, ax_array = plt.subplots(1,3)
@@ -109,15 +119,10 @@ def rgb(image_r, image_g, image_b):
 
 def main():
 
-    image_2012_r = fits.open("data/fits/20120312_39_R100.fits")[0].data[475:525,475:525]
-    image_2012_g = fits.open("data/fits/20120312_38_G100.fits")[0].data[475:525,475:525]
-    image_2012_b = fits.open("data/fits/20120312_40_U300.fits")[0].data[475:525,475:525]
-    image_2017_r = fits.open("data/fits/20170314_20_R.fits")[0].data[475:525,475:525]
-    image_2017_g = fits.open("data/fits/20170314_19_G.fits")[0].data[475:525,475:525]
-    image_2017_b = fits.open("data/fits/20170314_21_U.fits")[0].data[475:525,475:525]
+    unaligned_images = loadfits(path="data/SDSSJ094511-P1-images/", year="2012", band="R")
+    aligned_images = align(unaligned_images, cutout=[475:525,475:525])
+    stacked_image = stack(aligned_images)
 
-    images_2012 = [image_2012_r,image_2012_g,image_2012_b]
-    images_2017 = [image_2017_r,image_2017_g,image_2017_b]
 
     # plt.imshow(np.rot90(image_stack, k=1)[495:505,495:505], cmap='viridis', origin='lower', norm=LogNorm())
 
