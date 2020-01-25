@@ -117,9 +117,9 @@ def plot(image_r, image_g, image_u, cmap):
     """
     from matplotlib.colors import LogNorm
     figure, ax_array = plt.subplots(1,3)
-    ax_array[0,0].imshow(image_r, cmap=cmap, origin='lower', norm=LogNorm())
-    ax_array[0,1].imshow(image_g, cmap=cmap, origin='lower', norm=LogNorm())
-    ax_array[0,2].imshow(image_u, cmap=cmap, origin='lower', norm=LogNorm())
+    ax_array[0].imshow(image_r, cmap=cmap, origin='lower', norm=LogNorm())
+    ax_array[1].imshow(image_g, cmap=cmap, origin='lower', norm=LogNorm())
+    ax_array[2].imshow(image_u, cmap=cmap, origin='lower', norm=LogNorm())
     plt.show()
 
 def rgb(image_r, image_g, image_b):
@@ -130,16 +130,23 @@ def rgb(image_r, image_g, image_b):
     """
     from astropy.visualization import make_lupton_rgb
     rgb_image = make_lupton_rgb(image_r, image_g, image_b, Q=10, stretch=1000.)
-    plt.imshow(image)
+    plt.imshow(rgb_image)
     plt.show()
 
 def main():
+    # Empty list for collecting stacked images in three bands.
+    rgu_images = []
+    # Define the cutout region containing the reference object.
+    x, y, dx, dy = 475, 475, 50, 50
 
-    unaligned_images = loadfits(path="data/SDSSJ094511-P1-images/", year="2012", band="R")
-    aligned_images = align(unaligned_images, cutout=[475:525,475:525])
-    stacked_image = stack(aligned_images)
+    for  year in range(2012,2018):
+        for band in ["R", "G", "U"]:
+            unaligned_images = load_fits(path="data/SDSSJ094511-P1-images/", year=str(year), band=band)
+            aligned_images = align(unaligned_images, cutout=(x,y,dx,dy))
+            stacked_image = stack(aligned_images)
+            rgu_images.append(stacked_image)
 
-
-    # plt.imshow(np.rot90(image_stack, k=1)[495:505,495:505], cmap='viridis', origin='lower', norm=LogNorm())
+        plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
+        rgb(rgu_images[0][475:550,475:550], rgu_images[1][475:550,475:550], rgu_images[2][475:550,475:550])
 
 main()
