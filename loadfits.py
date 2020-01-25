@@ -34,16 +34,23 @@ CROTA2  =            90.361783 / [degrees]
 """
 
 def load_fits(**kwargs):
-
+    """
+    Receives a directory path and .fits filename parameters. Parses the
+    directory for files matching the naming parameters and loads matched files
+    into a list of astropy.fits objects. Returns the list.
+    """
     path = kwargs.get("path")
     year = kwargs.get("year")
     band = kwargs.get("band")
 
-    import os.walk as walk
+    import os
 
-    root, dirs, files = os.walk(path)
-
-    
+    images = []
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            if year in filename and band in filename:
+                images.append(fits.open(root + filename)[0].data)
+    return(images)
 
 def weighted_mean_2D(cutout,**kwargs):
     """
