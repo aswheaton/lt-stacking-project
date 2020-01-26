@@ -49,7 +49,10 @@ def load_fits(**kwargs):
     for root, dirs, files in os.walk(path):
         for filename in files:
             if year in filename and band in filename:
-                images.append(fits.open(root + filename)[0].data)
+                hdul = fits.open(root + filename)
+                images.append(hdul[0].data)
+                seeing_pixels.append(hdul[0].header["L1SEEING"])
+                seeing_arcsec.append(hdul[0].header["L1SEESEC"])
     return(images)
 
 def weighted_mean_2D(cutout,**kwargs):
@@ -133,6 +136,18 @@ def rgb(image_r, image_g, image_b):
     plt.imshow(rgb_image)
     plt.show()
 
+def hist(list1, list2):
+    """
+    Recieves two lists of seeing values, creates a bin histogram of each and
+    displays tthe resulting plots.
+    """
+    figure, ax_array = plt.subplots(1,2)
+    ax_array[0].hist(list1)
+    ax_array[1].hist(list2)
+    plt.show()
+
+seeing_pixels, seeing_arcsec = [] , []
+
 def main():
     # Empty list for collecting stacked images in three bands.
     rgu_images = []
@@ -148,5 +163,5 @@ def main():
 
         plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
         rgb(rgu_images[0][475:550,475:550], rgu_images[1][475:550,475:550], rgu_images[2][475:550,475:550])
-
+        hist(seeing_pixels, seeing_arcsec)
 main()
