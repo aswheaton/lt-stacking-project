@@ -49,11 +49,29 @@ def load_fits(**kwargs):
     for root, dirs, files in os.walk(path):
         for filename in files:
             if year in filename and band in filename:
+                print(year, band, filename)
                 hdul = fits.open(root + filename)
                 images.append(hdul[0].data)
                 seeing_pixels.append(hdul[0].header["L1SEEING"])
                 seeing_arcsec.append(hdul[0].header["L1SEESEC"])
     return(images)
+
+def bad_centroid(cutout, **kwargs):
+    x_sum = np.sum(cutout, axis=0)
+    y_sum = np.sum(cutout, axis=1)
+    x_max = np.where(x_sum == max(x_sum))
+    y_max = np.where(y_sum == max(y_sum))
+    return((int(np.floor(x_max)), int(np.floor(y_max))))
+
+def bad_centroid2(cutout, **kwargs):
+    x_sum = np.sum(cutout, axis=0)
+    y_sum = np.sum(cutout, axis=1)
+    x_fwh = np.where(x_sum >= 0.5 * max(x_sum))[0]
+    y_fwh = np.where(y_sum >= 0.5 * max(y_sum))[0]
+    # print(x_fwh.shape, x_sum[x_fwh].shape)
+    x_avg = np.average(x_fwh, weights=x_sum[x_fwh])
+    y_avg = np.average(y_fwh, weights=y_sum[y_fwh])
+    return((int(np.floor(x_avg)), int(np.floor(y_avg))))
 
 def weighted_mean_2D(cutout,**kwargs):
     """
@@ -78,11 +96,12 @@ def align(image_stack, **kwargs):
     borders where the image has been shifted.
     """
     x, y, dx, dy = kwargs.get("cutout")
+    centroid = kwargs.get("centroid")
     # Get lists of all the x and y centroids.
     x_centroids, y_centroids = [], []
     for image in image_stack:
-        x_centroids.append(weighted_mean_2D(image[x:x+dx,y:y+dy],floor=True)[0])
-        y_centroids.append(weighted_mean_2D(image[x:x+dx,y:y+dy],floor=True)[1])
+        x_centroids.append(centroid(image[x:x+dx,y:y+dy],floor=True)[0])
+        y_centroids.append(centroid(image[x:x+dx,y:y+dy],floor=True)[1])
     x_ref, y_ref = min(x_centroids), min(y_centroids)
     x_max_offset = max(x_centroids) - min(x_centroids)
     y_max_offset = max(y_centroids) - min(y_centroids)
@@ -91,8 +110,9 @@ def align(image_stack, **kwargs):
     aligned_image_stack = []
     for image in image_stack:
         aligned_image = np.zeros((image.shape[0]+x_max_offset, image.shape[1]+y_max_offset))
-        x_image_offset = weighted_mean_2D(image[x:x+dx,y:y+dy],floor=True)[0] - x_ref
-        y_image_offset = weighted_mean_2D(image[x:x+dx,y:y+dy],floor=True)[1] - y_ref
+        x_image_offset = centroid(image[x:x+dx,y:y+dy],floor=True)[0] - x_ref
+        y_image_offset = centroid(image[x:x+dx,y:y+dy],floor=True)[1] - y_ref
+        print(x_image_offset, y_image_offset)
         aligned_image[x_image_offset:x_image_offset+image.shape[0],y_image_offset:y_image_offset+image.shape[1]] = image
         aligned_image_stack.append(aligned_image)
     return(aligned_image_stack)
@@ -122,6 +142,9 @@ def plot(image_r, image_g, image_u, cmap):
     figure, ax_array = plt.subplots(1,3)
     ax_array[0].imshow(image_r, cmap=cmap, origin='lower', norm=LogNorm())
     ax_array[1].imshow(image_g, cmap=cmap, origin='lower', norm=LogNorm())
+    ax_array[1].scatter(524, 503, s=2, c='red', marker='o')
+    ax_array[1].scatter(472, 496, s=2, c='red', marker='o')
+    ax_array[1].scatter(487, 473, s=2, c='red', marker='o')
     ax_array[2].imshow(image_u, cmap=cmap, origin='lower', norm=LogNorm())
     plt.show()
 
@@ -142,8 +165,8 @@ def hist(list1, list2):
     displays tthe resulting plots.
     """
     figure, ax_array = plt.subplots(1,2)
-    ax_array[0].hist(list1)
-    ax_array[1].hist(list2)
+    ax_array[0].hist(list1, range=(3,10))
+    ax_array[1].hist(list2, range=(2,2.6))
     plt.show()
 
 seeing_pixels, seeing_arcsec = [] , []
@@ -152,16 +175,16 @@ def main():
     # Empty list for collecting stacked images in three bands.
     rgu_images = []
     # Define the cutout region containing the reference object.
-    x, y, dx, dy = 475, 475, 50, 50
+    x, y, dx, dy = 450, 450, 75, 60
 
     for  year in range(2012,2018):
         for band in ["R", "G", "U"]:
             unaligned_images = load_fits(path="data/SDSSJ094511-P1-images/", year=str(year), band=band)
-            aligned_images = align(unaligned_images, cutout=(x,y,dx,dy))
+            aligned_images = align(unaligned_images, cutout=(x,y,dx,dy), centroid=bad_centroid2)
             stacked_image = stack(aligned_images)
             rgu_images.append(stacked_image)
 
         plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
-        rgb(rgu_images[0][475:550,475:550], rgu_images[1][475:550,475:550], rgu_images[2][475:550,475:550])
-        hist(seeing_pixels, seeing_arcsec)
+        rgb(rgu_images[0][:1024,:1024], rgu_images[1][:1024,:1024], rgu_images[2][:1024,:1024])
+    hist(seeing_pixels, seeing_arcsec)
 main()
