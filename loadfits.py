@@ -56,22 +56,31 @@ def load_fits(**kwargs):
                 seeing_arcsec.append(hdul[0].header["L1SEESEC"])
     return(images)
 
-def bad_centroid(cutout, **kwargs):
-    x_sum = np.sum(cutout, axis=0)
-    y_sum = np.sum(cutout, axis=1)
-    x_max = np.where(x_sum == max(x_sum))
-    y_max = np.where(y_sum == max(y_sum))
-    return((int(np.floor(x_max)), int(np.floor(y_max))))
+def radians(coordinates):
+    ra_str = coordinates(0)
+    dec_str = coordinates(1)
+    ra = (ra_str[:2] * np.pi / 12) + (ra_str[4:5] * np.pi / 720) + (ra_str[7:] * np.pi / 43200)
+    dec = (dec_str[:2] * np.pi / 12) + (dec_str[4:5] * np.pi / 720) + (dec_str[7:] * np.pi / 43200)
+    return((ra, dec))
 
-def bad_centroid2(cutout, **kwargs):
+def bad_centroid(cutout):
     x_sum = np.sum(cutout, axis=0)
     y_sum = np.sum(cutout, axis=1)
-    x_fwh = np.where(x_sum >= 0.5 * max(x_sum))[0]
-    y_fwh = np.where(y_sum >= 0.5 * max(y_sum))[0]
-    # print(x_fwh.shape, x_sum[x_fwh].shape)
-    x_avg = np.average(x_fwh, weights=x_sum[x_fwh])
-    y_avg = np.average(y_fwh, weights=y_sum[y_fwh])
+    x_max = np.where(x_sum == max(x_sum))[0][0]
+    y_max = np.where(y_sum == max(y_sum))[0][0]
+    return((x_max, y_max))
+
+def bad_centroid_2(cutout):
+    x_sum = np.sum(cutout, axis=0)
+    y_sum = np.sum(cutout, axis=1)
+    x_fwh = np.where(x_sum >= 0.5 * max(x_sum))
+    y_fwh = np.where(y_sum >= 0.5 * max(y_sum))
+    x_avg = np.average(x_fwh[0], weights=x_sum[x_fwh])
+    y_avg = np.average(y_fwh[0], weights=y_sum[y_fwh])
     return((int(np.floor(x_avg)), int(np.floor(y_avg))))
+
+def hybrid_centroid(proper_coords, wcs_coords, cutout, **kwargs):
+    return((x_avg, y_avg))
 
 def weighted_mean_2D(cutout,**kwargs):
     """
@@ -80,6 +89,10 @@ def weighted_mean_2D(cutout,**kwargs):
     """
     x_sum = np.sum(cutout, axis=0)
     y_sum = np.sum(cutout, axis=1)
+    # plt.plot(range(len(x_sum)), x_sum)
+    # plt.show()
+    # plt.plot(range(len(y_sum)), y_sum)
+    # plt.show()
     x_avg = np.average(range(x_sum.size), weights=x_sum)
     y_avg = np.average(range(y_sum.size), weights=y_sum)
     if kwargs.get("floor") == True:
@@ -117,7 +130,10 @@ def align(image_stack, **kwargs):
         aligned_image_stack.append(aligned_image)
     return(aligned_image_stack)
 
-def stack(aligned_image_stack):
+def stack(aligned_image_stack):    # plt.plot(range(len(x_sum)), x_sum)
+    # plt.show()
+    # plt.plot(range(len(y_sum)), y_sum)
+    # plt.show()
     """
         Receives a list of aligned images and returns their sum.
     """
@@ -176,11 +192,13 @@ def main():
     rgu_images = []
     # Define the cutout region containing the reference object.
     x, y, dx, dy = 450, 450, 75, 60
+    # Define the proper location of the object, for alignment.
+    proper_coords = ("09:45:11.08","17:45:44.80")
 
     for  year in range(2012,2018):
         for band in ["R", "G", "U"]:
             unaligned_images = load_fits(path="data/SDSSJ094511-P1-images/", year=str(year), band=band)
-            aligned_images = align(unaligned_images, cutout=(x,y,dx,dy), centroid=bad_centroid2)
+            aligned_images = align(unaligned_images, cutout=(x,y,dx,dy), centroid=bad_centroid_2)
             stacked_image = stack(aligned_images)
             rgu_images.append(stacked_image)
 
