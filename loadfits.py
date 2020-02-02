@@ -3,37 +3,6 @@ from astropy.io import fits
 import numpy as np
 from scipy import optimize
 
-"""
-CCDXIMSI=                 1024 / [pixels] Imaging pixels
-CCDYIMSI=                 1024 / [pixels] Imaging pixels
-CCDXBIN =                    2 / [pixels] X binning factor
-CCDYBIN =                    2 / [pixels] Y binning factor
-CCDXPIXE=            0.0000135 / [m] Size of pixels, in X:13.5um
-CCDYPIXE=            0.0000135 / [m] Size of pixels, in Y:13.5um
-CCDSCALE=                0.279 / [arcsec/binned pixel] Scale of binned image on
-RA      = '09:45:10.866'       / World coordinate at the reference pixel
-DEC     = '+17:45:48.17'       / World coordinate at the reference pixel
-RADECSYS= 'FK5     '           / [FK4, FK5] Fundamental coord system
-L1SEEING=             4.350539 / [pixels] frame seeing in pixels
-L1SEESEC=             1.213801 / [arcsec] frame seeing in arcsec
-SEEING  =             4.350539 / [pixels] frame seeing in pixels
-CTYPE1  = 'RA---TAN'           / WCS projection
-CTYPE2  = 'DEC--TAN'           / WCS projection
-CRPIX1  =                 512. / WCS reference pixel coordinate
-CRPIX2  =                 512. / WCS reference pixel coordinate
-CRVAL1  =        146.295274426 / [degrees] World coordinate at the ref pix
-CRVAL2  =          17.76338016 / [degrees] World coordinate at the ref pix
-WRA     = '9:45:11.075'        / Original RA value from TCS before WCS fit
-WDEC    = '+17:45:44.89'       / Original DEC value from TCS before WCS fit
-WRADECSY= 'FK5     '           / [FK4,FK5] Original Fundamental system before WC
-WROTSKY =             270.0001 / [deg] Original sky PA from TCS before WCS fit
-EPOCH   =                2000. / Epoch of coordinate
-CDELT1  =       -7.7508973E-05 / [degrees/pixel]
-CDELT2  =        7.7508973E-05 / [degrees/pixel]
-CROTA1  =            90.361783 / [degrees]
-CROTA2  =            90.361783 / [degrees]
-"""
-
 def load_fits(**kwargs):
     """
     Receives a directory path and .fits filename parameters. Parses the
@@ -113,94 +82,118 @@ def degrees(coordinates):
     dec = 360 * (dec_str[0] / 24 + dec_str[1] / 1440 + dec_str[3] / 86400)
     return((ra, dec))
 
-def bad_centroid(cutout):
-    """
-    Receives a cutout of an image, and returns a tuple of the coordinates of the
-    brightest pixel in that image, in pixels.
-    """
-    x_sum = np.sum(cutout, axis=0)
-    y_sum = np.sum(cutout, axis=1)
-    x_max = np.where(x_sum == max(x_sum))[0][0]
-    y_max = np.where(y_sum == max(y_sum))[0][0]
-    return((x_max, y_max))
+def wcs_offset():
+    deg_offset = obj_coords - ref_coords
+    ra_pix = image[0].header["CDELT1"]
+    dec_pix = image[0].header["CDELT2"]
+    pix_offset = (ra_pix * deg_offset[0], dec_pix * deg_offset[1])
+    obj_guess = (pix_offset) + (image[0].header["CRPIX1"], image[0].header["CRPIX2"])
 
-def bad_centroid_2(cutout, **kwargs):
+def max_value_centroid(image_data, **kwargs):
     """
-    Recieves an argument of type ndarray and returns a tuple of the weighted
-    mean centroid of the object contained in the cutout, omitting the values
-    which fall beneath half the maximum of the image.
+    Receives an image array and returns the coordinates of the brightest pixel
+    in that image array.
+    Args:
+        image_data (2darray): The image array to be searched.
+    Returns:
+        (x_max,y_max) (tuple): pixel coordinates of the maximum value of the
+            image array.
     """
-    x_sum = np.sum(cutout, axis=0)
-    y_sum = np.sum(cutout, axis=1)
-    x_fwh = np.where(x_sum >= 0.5 * max(x_sum))
-    y_fwh = np.where(y_sum >= 0.5 * max(y_sum))
-    x_avg = np.average(x_fwh[0], weights=x_sum[x_fwh])
-    y_avg = np.average(y_fwh[0], weights=y_sum[y_fwh])
-    plt.imshow(cutout, cmap='viridis', origin='lower')
-    plt.scatter(x_avg, y_avg, s=2, c='red', marker='o')
-    plt.show()
-    return((int(np.floor(x_avg)), int(np.floor(y_avg))))
+    x_max, y_max = np.where(image_data == np.amax(image_data))
+    # plt.imshow(cutout)
+    # plt.scatter(x_max, y_max, s=2, c='red', marker='o')
+    # plt.show()
+    return((x_max[0], y_max[0]))
 
-def annuli(array, center, radii):
+def annuli_mask(array, center, radii):
     """
     Receives and array and returns a tuple of three masked annuli from the
     input array about a given center.
     """
     return inner_annulus, middle_annulus, outer_annulus
 
-def hybrid_centroid(image, object_coords, object_size, **kwargs):
-    """
-    Receives a FITS image, proper coordinates of an object in the image, the size
-    """
-
-    obj_coords = degrees(object_coords)
-    ref_coords = degrees((image[0].header["RA"], image[0].header["DEC"]))
-
-    deg_offset = obj_coords - ref_coords
-
-    ra_pix = image[0].header["CDELT1"]
-    dec_pix = image[0].header["CDELT2"]
-    pix_offset = (ra_pix * deg_offset[0], dec_pix * deg_offset[1])
-
-    obj_guess = (pix_offset) + (image[0].header["CRPIX1"], image[0].header["CRPIX2"])
-
-    image_data = image[0].data
-
-    annuli = annulii(image_data, obj_guess, obj_size)
-
-    x_sum = np.sum(annulii[0], axis=0)
-    y_sum = np.sum(annulii[0], axis=1)
-    # plt.plot(range(len(x_sum)), x_sum)
-    # plt.show()
-    # plt.plot(range(len(y_sum)), y_sum)
-    # plt.show()
-    x_avg = np.average(range(x_sum.size), weights=x_sum)
-    y_avg = np.average(range(y_sum.size), weights=y_sum)
-
-    return((x_avg, y_avg))
+def create_mask(image_data, **kwargs):
+    # Offset image so that all values are positive
+    image_data += np.abs(np.amin(image_data))
+    mask = np.empty(image_data.shape)
+    # Invalidate values based on the value of their neighbors (slow).
+    if kwargs.get("condition") == "neighbors":
+        for i in range(image_data.shape[0]):
+            for j in range(image_data.shape[1]):
+                try:
+                    neighbors_sum = image_data[bc(i-1,j)]+image_data[bc(i+1,j)]+image_data[bc(i,j-1)]+image_data[bc(i,j+1)]
+                    if image_data[i,j] >= neighbors_sum:
+                        mask[i,j] = 0
+                    else:
+                        mask[i,j] = 1
+                except IndexError:
+                    mask[i,j] = 0
+    # Invalidate values that fall below a certain threshold (fast).
+    if kwargs.get("condition") == "threshold":
+        max_value = np.amax(image_data)
+        for i in range(image_data.shape[0]):
+            for j in range(image_data.shape[1]):
+                if image_data[i,j] <= 0.67 * max_value:
+                    mask[i,j] = 0
+                else:
+                    mask[i,j] = 1
+    return(mask)
 
 def weighted_mean_2D(cutout,**kwargs):
     """
-        Recieves an argument of type ndarray and returns a tuple of the weighted
-        mean centroid of the object contained in the cutout.
+    Recieves an argument of type ndarray and returns a tuple of the weighted
+    mean centroid of the object contained in the cutout.
+    Args:
+        cutout (ndarray): portion of fits full ndarray.
+    Returns:
+        x_avg (int): weighted mean of x values.
+        y_avg (int): weighted mean of y values.
     """
+    cutout += np.abs(np.amin(cutout))
     x_sum = np.sum(cutout, axis=0)
     y_sum = np.sum(cutout, axis=1)
-    # plt.plot(range(len(x_sum)), x_sum)
-    # plt.show()
-    # plt.plot(range(len(y_sum)), y_sum)
-    # plt.show()
     x_avg = np.average(range(x_sum.size), weights=x_sum)
     y_avg = np.average(range(y_sum.size), weights=y_sum)
-    plt.imshow(cutout, cmap='viridis', origin='lower')
-    plt.scatter(x_avg, y_avg, s=2, c='red', marker='o')
-    plt.show()
+    # plt.imshow(cutout)
+    # plt.scatter(x_avg, y_avg, s=2, c='red', marker='o')
+    # plt.show()
     if kwargs.get("floor") == True:
         return((int(np.floor(x_avg)), int(np.floor(y_avg))))
     else:
         return((x_avg, y_avg))
 
-def align(image_stack, **kwargs):
+def hybrid_centroid(image, object_coords, object_size, **kwargs):
+    """
+    Recieves an array of image data and returns the pixel coordinates of the
+    centroid of the brightest star in the frame. Makes an initial guess at the
+    position of the star by finding the maximum value in the array, then
+    performs a weighted mean in two dimensions about the guess for finer accuracy.
+    Args:
+        image_data (2darray): array of image data containing reference star.
+        size (int): the radius of the reference star, in pixels. Used to create
+            cutout of appropriate size.
+    Returns:
+        (x_avg,y_avg) (tuple): pixel coordinates of the centroid of the
+            brightest star in the image array.
+    """
+    # Attempt to invalidate pixels which may confuse the initial guess.
+    if kwargs.get("mask") == True:
+        masked_data = np.ma.array(image_data, mask=create_mask(image_data, condition="neighbors"))
+        x_guess, y_guess = max_value_centroid(masked_data)
+    elif: kwargs.get("wcs") == True:
+        x_guess, y_guess = wcs_offset()
+    # Get the maximum value of the cutout as an initial guess.
+    else:
+        x_guess, y_guess = max_value_centroid(image_data)
+    # Create a smaller cutout around the initial guess.
+    cutout = image[0].data[x_guess-size:x_guess+size,y_guess-size:y_guess+size]
+    x_avg, y_avg = weighted_mean_2D(cutout)
+    # plt.imshow(cutout)
+    # plt.scatter(x_avg, y_avg, s=2, c='red', marker='o')
+    # plt.show()
+    return((x_avg, y_avg))
+
+def old_align(image_stack, **kwargs):
     """
     Recieves a list of image arrays and some "cutout" range containing a common
     object to use for alignment of the image stack.
@@ -229,11 +222,37 @@ def align(image_stack, **kwargs):
         aligned_image_stack.append(aligned_image)
     return(aligned_image_stack)
 
+def align(images, **kwargs):
+    """
+    Recieves a list of image arrays containing a common object to use for
+    alignment of the image stack. Returns a list of image arrays of different
+    size, aligned, and with zero borders where the image has been shifted.
+    Args:
+        images (list): Frames to be aligned.
+    Returns:
+        aligned_images (list): new frames that have been aligned and can be
+            stacked.
+    """
+    # Boolean, whether or not to mask images for hot pixels on the detector.
+    mask = kwargs.get("mask")
+    # Find the centroid of the reference star in each image.
+    x_centroids, y_centroids = [], []
+    for image in images:
+        x_centroids.append(hybrid_centroid(image[0].data, size=50, mask=mask)[0])
+        y_centroids.append(hybrid_centroid(image[0].data, size=50, mask=mask)[1])
+    max_pos = (max(x_centroids), max(y_centroids))
+    min_pos = (min(x_centroids), min(y_centroids))
+    max_dif = (max_pos[0]-min_pos[0], max_pos[1]-min_pos[1])
+    # Create new stack of aligned images using the centroid in each frame.
+    aligned_images = []
+    for image in images:
+        aligned_image = np.zeros((image[0].data.shape[0]+max_dif[0], image[0].data.shape[1]+max_dif[1]))
+        disp = (max_pos[0] - hybrid_centroid(image[0].data, size=50, mask=mask)[0], max_pos[1] - hybrid_centroid(image[0].data, size=50, mask=mask)[1])
+        aligned_image[disp[0]:disp[0]+image[0].data.shape[0],disp[1]:disp[1]+image[0].data.shape[1]] = image[0].data
+        aligned_images.append(aligned_image)
+    return aligned_images
+
 def stack(aligned_image_stack):
-    # plt.plot(range(len(x_sum)), x_sum)
-    # plt.show()
-    # plt.plot(range(len(y_sum)), y_sum)
-    # plt.show()
     """
         Receives a list of aligned images and returns their sum.
     """
