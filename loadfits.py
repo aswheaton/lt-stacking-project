@@ -19,7 +19,7 @@ def load_fits(**kwargs):
     for root, dirs, files in os.walk(path):
         for filename in files:
             if year in filename and band in filename:
-                print(year, band, " matched " filename)
+                print(year, band, " matched ", filename)
                 hdul = fits.open(root + filename)
                 images.append(hdul[0].data)
                 seeing_pixels.append(hdul[0].header["L1SEEING"])
@@ -78,16 +78,19 @@ def degrees(coordinates):
     And returns a tuple of the equivalent values in degrees.
     """
     ra_str, dec_str = coordinates[0].split(":"), coordinates[1].split(":")
-    ra = 360 * (ra_str[0] / 24 + ra_str[1] / 1440 + ra_str[3] / 86400)
-    dec = 360 * (dec_str[0] / 24 + dec_str[1] / 1440 + dec_str[3] / 86400)
+    ra = 360 * (float(ra_str[0]) / 24 + float(ra_str[1]) / 1440 + float(ra_str[2]) / 86400)
+    dec = 360 * (float(dec_str[0]) / 24 + float(dec_str[1]) / 1440 + float(dec_str[2]) / 86400)
     return((ra, dec))
 
-def wcs_offset():
-    deg_offset = obj_coords - ref_coords
+def wcs_offset(proper_coords, image):
+    central_image_coords = (image[0].header["CRPIX1"], image[0].header["CRPIX2"])
+    ra_offset = degrees(proper_coords)[0] - degrees(central_image_coords)[0]
+    dec_offset = degrees(proper_coords)[1] - degrees(central_image_coords)[1]
     ra_pix = image[0].header["CDELT1"]
     dec_pix = image[0].header["CDELT2"]
-    pix_offset = (ra_pix * deg_offset[0], dec_pix * deg_offset[1])
-    obj_guess = (pix_offset) + (image[0].header["CRPIX1"], image[0].header["CRPIX2"])
+    pix_offset = (ra_pix * ra_offset, dec_pix * dec_offset)
+    obj_guess = (pix_offset[0] + central_image_coords[0], pix_offset[1] + central_image_coords[1])
+    return(obj_guess)
 
 def max_value_centroid(image_data, **kwargs):
     """
@@ -162,7 +165,7 @@ def weighted_mean_2D(cutout,**kwargs):
     else:
         return((x_avg, y_avg))
 
-def hybrid_centroid(image, object_coords, object_size, **kwargs):
+def hybrid_centroid(image_data, **kwargs):
     """
     Recieves an array of image data and returns the pixel coordinates of the
     centroid of the brightest star in the frame. Makes an initial guess at the
@@ -176,22 +179,30 @@ def hybrid_centroid(image, object_coords, object_size, **kwargs):
         (x_avg,y_avg) (tuple): pixel coordinates of the centroid of the
             brightest star in the image array.
     """
+    proper_coords = degrees(("09:45:11.08","17:45:44.80"))
     # Attempt to invalidate pixels which may confuse the initial guess.
     if kwargs.get("mask") == True:
         masked_data = np.ma.array(image_data, mask=create_mask(image_data, condition="neighbors"))
         x_guess, y_guess = max_value_centroid(masked_data)
-    elif: kwargs.get("wcs") == True:
-        x_guess, y_guess = wcs_offset()
+    elif kwargs.get("wcs") == True:
+        x_guess, y_guess = wcs_offset(proper_coords, image_data)
     # Get the maximum value of the cutout as an initial guess.
     else:
         x_guess, y_guess = max_value_centroid(image_data)
     # Create a smaller cutout around the initial guess.
-    cutout = image[0].data[x_guess-size:x_guess+size,y_guess-size:y_guess+size]
+    cutout = np.array(image[0].data[x_guess-size:x_guess+size,y_guess-size:y_guess+size])
     x_avg, y_avg = weighted_mean_2D(cutout)
     # plt.imshow(cutout)
     # plt.scatter(x_avg, y_avg, s=2, c='red', marker='o')
     # plt.show()
     return((x_avg, y_avg))
+
+def manual_centroid(image, **kwargs):
+    """
+    Allows the user to manually define the initial guess for centroiding by
+    clicking on an imshow plot.
+
+    Recieves an array of image 
 
 def old_align(image_stack, **kwargs):
     """
@@ -238,8 +249,8 @@ def align(images, **kwargs):
     # Find the centroid of the reference star in each image.
     x_centroids, y_centroids = [], []
     for image in images:
-        x_centroids.append(hybrid_centroid(image[0].data, size=50, mask=mask)[0])
-        y_centroids.append(hybrid_centroid(image[0].data, size=50, mask=mask)[1])
+        x_centroids.append(hybrid_centroid(image[0].data, size=50)[0])
+        y_centroids.append(hybrid_centroid(image[0].data, size=50)[1])
     max_pos = (max(x_centroids), max(y_centroids))
     min_pos = (min(x_centroids), min(y_centroids))
     max_dif = (max_pos[0]-min_pos[0], max_pos[1]-min_pos[1])
@@ -247,7 +258,7 @@ def align(images, **kwargs):
     aligned_images = []
     for image in images:
         aligned_image = np.zeros((image[0].data.shape[0]+max_dif[0], image[0].data.shape[1]+max_dif[1]))
-        disp = (max_pos[0] - hybrid_centroid(image[0].data, size=50, mask=mask)[0], max_pos[1] - hybrid_centroid(image[0].data, size=50, mask=mask)[1])
+        disp = (max_pos[0] - hybrid_centroid(image[0].data, size=50)[0], max_pos[1] - hybrid_centroid(image[0].data, size=50)[1])
         aligned_image[disp[0]:disp[0]+image[0].data.shape[0],disp[1]:disp[1]+image[0].data.shape[1]] = image[0].data
         aligned_images.append(aligned_image)
     return aligned_images
@@ -312,12 +323,12 @@ def main():
     # Define the cutout region containing the reference object.
     x, y, dx, dy = 450, 450, 75, 60
     # Define the proper location of the object, for alignment.
-    # proper_coords = radians(("09:45:11.08","17:45:44.80"))
+    proper_coords = degrees(("09:45:11.08","17:45:44.80"))
 
     for  year in range(2012,2018):
         for band in ["R", "G", "U"]:
             unaligned_images = load_fits(path="data/SDSSJ094511-P1-images/", year=str(year), band=band)
-            aligned_images = align(unaligned_images, cutout=(x,y,dx,dy), centroid=bad_centroid_2)
+            aligned_images = align(unaligned_images, cutout=(x,y,dx,dy), centroid=hybrid_centroid)
             stacked_image = stack(aligned_images)
             rgu_images.append(stacked_image)
 
