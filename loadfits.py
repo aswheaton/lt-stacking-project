@@ -108,11 +108,49 @@ def max_value_centroid(image_data, **kwargs):
     # plt.show()
     return((x_max[0], y_max[0]))
 
+def get_click_coord(array):
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    plt.imshow(array)
+    cid = fig.canvas.mpl_connect('button_press_event', onclick)
+    plt.show()
+    return(point)
+
+def onclick(click):
+    global point
+    point = (click.xdata,click.ydata)
+    return(point)
+
 def annuli_mask(array, center, radii):
     """
     Receives and array and returns a tuple of three masked annuli from the
     input array about a given center.
     """
+
+    inner_annulus = np.zeros(6*radii, 6*radii)
+    middle_annulus = np.zeros(6*radii, 6*radii)
+    outer_annulus = np.zeros(6*radii, 6*radii)
+
+    for x in range(6*radii):
+        for y in range(6*radii):
+            sumsqu = (x-(3*radii))**2 + (y-(3*radii))**2
+            if sumsqu < radii:
+                inner_annulus[x,y] = 0
+                middle_annulus[x,y] = 1
+                outer_annulus[x,y] = 1
+            if sumsqu > radii and sumsqu < 2*radii:
+                inner_annulus[x,y] = 1
+                middle_annulus[x,y] = 0
+                outer_annulus[x,y] = 1
+            if sumsqu > 2*radii and sumsqu < 3*radii:
+                inner_annulus[x,y] = 1
+                middle_annulus[x,y] = 1
+                outer_annulus[x,y] = 0
+            else:
+                inner_annulus[x,y] = 1
+                middle_annulus[x,y] = 1
+                outer_annulus[x,y] = 1
+
     return inner_annulus, middle_annulus, outer_annulus
 
 def create_mask(image_data, **kwargs):
@@ -188,7 +226,7 @@ def hybrid_centroid(image_data, **kwargs):
         x_guess, y_guess = wcs_offset(proper_coords, image_data)
     # Get the maximum value of the cutout as an initial guess.
     else:
-        x_guess, y_guess = max_value_centroid(image_data)
+        x_guess, y_guess = get_click_coord(image_data)
     # Create a smaller cutout around the initial guess.
     cutout = np.array(image[0].data[x_guess-size:x_guess+size,y_guess-size:y_guess+size])
     x_avg, y_avg = weighted_mean_2D(cutout)
@@ -202,8 +240,8 @@ def manual_centroid(image, **kwargs):
     Allows the user to manually define the initial guess for centroiding by
     clicking on an imshow plot.
 
-    Recieves an array of image 
-
+    Recieves an array of image
+    """
 def old_align(image_stack, **kwargs):
     """
     Recieves a list of image arrays and some "cutout" range containing a common
