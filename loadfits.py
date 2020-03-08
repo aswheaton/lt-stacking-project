@@ -9,22 +9,50 @@ def load_fits(**kwargs):
     directory for files matching the naming parameters and loads matched files
     into a list of astropy.fits objects. Returns the list.
     """
-    path = kwargs.get("path")
     year = kwargs.get("year")
     band = kwargs.get("band")
-
-    import os
-
+    target_id = kwargs.get("target")
     images = []
-    for root, dirs, files in os.walk(path):
+    for root, dir, files in walk(path):
         for filename in files:
-            if year in filename and band in filename:
-                print(year, band, " matched ", filename)
-                hdul = fits.open(root + filename)
-                images.append(hdul[0].data)
-                seeing_pixels.append(hdul[0].header["L1SEEING"])
-                seeing_arcsec.append(hdul[0].header["L1SEESEC"])
-    return(images)
+            if "left" in filename:
+                pass
+            elif "at" in filename:
+                pass
+            elif "end" in filename:
+                pass
+            elif target_id in filename and band in filename:
+                int_time = int(filename.split("_")[2][:-1])
+                print(target_id, band, int_time, " matched ", filename)
+                with fits.open(root+filename) as hdul:
+                    new_image = {}
+                    new_image["int_time"] = int_time
+                    new_image["target"] = target_id
+                    new_image["filename"] = filename
+                    new_image["data"] = hdul[0].data
+                    images.append(new_image)
+    # Check that all the sizes of the loaded fits objects match.
+    x_sizes, y_sizes = [], []
+    for image in images:
+        x_sizes.append(image["data"].shape[0])
+        y_sizes.append(image["data"].shape[1])
+    # If all fits object dimensions match, return the existing list of objects.
+    if all(x==x_sizes[0] for x in x_sizes) and all(y==y_sizes[0] for y in y_sizes):
+        return(images)
+    # If not, cast them into arrays of zeros with matching dimensions and copy
+    # the header data over to the newly created fits objects.
+    else:
+        print("Imported image dimensions do not match! Framing with zeros.")
+        framed_images = []
+        for image in images:
+            framed_image = {}
+            framed_image["data"] = np.zeros((max(x_sizes),max(y_sizes)))
+            framed_image["data"][:image["data"].shape[0],:image["data"].shape[1]] = image["data"]
+            framed_image["int_time"] = image["int_time"]
+            framed_image["target"] = image["target"]
+            framed_image["filename"] = image["filename"]
+            framed_images.append(framed_image)
+        return(framed_images)
 
 def gaussian(height, center_x, center_y, width_x, width_y):
     """
@@ -366,7 +394,7 @@ def main():
     for  year in range(2012,2018):
         for band in ["R", "G", "U"]:
             unaligned_images = load_fits(path="data/SDSSJ094511-P1-images/", year=str(year), band=band)
-            aligned_images = align(unaligned_images, cutout=(x,y,dx,dy), centroid=hybrid_centroid)
+            aligned_images = align(unaligned_images, centroid=manual)
             stacked_image = stack(aligned_images)
             rgu_images.append(stacked_image)
 
