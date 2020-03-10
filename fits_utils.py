@@ -59,6 +59,8 @@ def load_fits(**kwargs):
                     new_image = {}
                     new_image["filename"] = filename
                     new_image["data"] = hdul[0].data
+                    new_image["year"] = year
+                    new_image["band"] = band
                     new_image["rot1"] = hdul[0].header["CROTA1"]
                     new_image["rot2"] = hdul[0].header["CROTA1"]
 
