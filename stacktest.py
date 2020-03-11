@@ -1,5 +1,12 @@
 from fits_utils import *
 
+# Empty list for collecting stacked images in three bands.
+rgu_images = []
+# Define the cutout region containing the reference object.
+x, y, dx, dy = 450, 450, 75, 60
+# Define the proper location of the object, for alignment.
+proper_coords = degrees(("09:45:11.08","17:45:44.80"))
+
 band = "G"
 unaligned_images = []
 
@@ -33,3 +40,7 @@ for image in unaligned_images:
 # stacked_image = stack(aligned_images, correct_exposure=False)
 # plt.imshow(stacked_image["data"][475:575,450:550], cmap='viridis', origin='lower', norm=LogNorm())
 # plt.show()
+
+plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
+rgb(rgu_images[0][:1024,:1024], rgu_images[1][:1024,:1024], rgu_images[2][:1024,:1024])
+hist(seeing_pixels, seeing_arcsec)

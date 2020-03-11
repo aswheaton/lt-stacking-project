@@ -240,3 +240,128 @@ def manual_centroid(image_data, **kwargs):
     # Get the mean weighted average of the smaller cutout.
     x_new, y_new = weighted_mean_2D(cutout, floor=True)
     return((x_new, y_new))
+
+from scipy import optimize
+
+def gaussian(height, center_x, center_y, width_x, width_y):
+    """
+    Returns a gaussian function with the given parameters.
+    """
+    width_x = float(width_x)
+    width_y = float(width_y)
+    return lambda x,y: height*np.exp(-(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
+
+def moments(data):
+    """
+    Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D
+    distribution by calculating its moments.
+    """
+    total = data.sum()
+    X, Y = np.indices(data.shape)
+    x = (X * data).sum() / total
+    y = (Y * data).sum() / total
+    col = data[:,int(y)]
+    width_x = np.sqrt(np.abs((np.arange(col.size) - y)**2 * col).sum() / col.sum())
+    row = data[int(x), :]
+    width_y = np.sqrt(np.abs((np.arange(row.size) - x)**2 * row).sum() / row.sum())
+    height = data.max()
+    return height, x, y, width_x, width_y
+
+def fitgaussian(data):
+    """
+    Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D
+    distribution found by a fit.
+    """
+    params = moments(data)
+    errorfunction = lambda p: np.ravel(gaussian(*p)(*np.indices(data.shape)) - data)
+    p, success = optimize.leastsq(errorfunction, params)
+    return(p)
+
+def radians(coordinates):
+    """
+    Receives a tuple of strings, containing RA and DEC coordinates in the format:
+    ("NN:NN:NN.NN","+NN:NN:NN.NN")
+    And returns a tuple of the equivalent values in radians.
+    """
+    ra_str, dec_str = coordinates[0].split(":"), coordinates[1].split(":")
+    ra = np.pi * (ra_str[0] / 12 + ra_str[1] / 720 + ra_str[2] / 43200)
+    dec = np.pi * (dec_str[0] / 12 + dec_str[1] / 720 + dec_str[2] / 43200)
+    return((ra, dec))
+
+def degrees(coordinates):
+    """
+    Receives a tuple of strings, containing RA and DEC coordinates in the format:
+    ("NN:NN:NN.NN","+NN:NN:NN.NN")
+    And returns a tuple of the equivalent values in degrees.
+    """
+    ra_str, dec_str = coordinates[0].split(":"), coordinates[1].split(":")
+    ra = 360 * (float(ra_str[0]) / 24 + float(ra_str[1]) / 1440 + float(ra_str[2]) / 86400)
+    dec = 360 * (float(dec_str[0]) / 24 + float(dec_str[1]) / 1440 + float(dec_str[2]) / 86400)
+    return((ra, dec))
+
+def wcs_offset(proper_coords, image):
+    central_image_coords = (image[0].header["CRPIX1"], image[0].header["CRPIX2"])
+    ra_offset = degrees(proper_coords)[0] - degrees(central_image_coords)[0]
+    dec_offset = degrees(proper_coords)[1] - degrees(central_image_coords)[1]
+    ra_pix = image[0].header["CDELT1"]
+    dec_pix = image[0].header["CDELT2"]
+    pix_offset = (ra_pix * ra_offset, dec_pix * dec_offset)
+    obj_guess = (pix_offset[0] + central_image_coords[0], pix_offset[1] + central_image_coords[1])
+    return(obj_guess)
+
+def annuli_mask(array, center, radii):
+    """
+    Receives and array and returns a tuple of three masked annuli from the
+    input array about a given center.
+    """
+
+    inner_annulus = np.zeros(6*radii, 6*radii)
+    middle_annulus = np.zeros(6*radii, 6*radii)
+    outer_annulus = np.zeros(6*radii, 6*radii)
+
+    for x in range(6*radii):
+        for y in range(6*radii):
+            sumsqu = (x-(3*radii))**2 + (y-(3*radii))**2
+            if sumsqu < radii:
+                inner_annulus[x,y] = 0
+                middle_annulus[x,y] = 1
+                outer_annulus[x,y] = 1
+            if sumsqu > radii and sumsqu < 2*radii:
+                inner_annulus[x,y] = 1
+                middle_annulus[x,y] = 0
+                outer_annulus[x,y] = 1
+            if sumsqu > 2*radii and sumsqu < 3*radii:
+                inner_annulus[x,y] = 1
+                middle_annulus[x,y] = 1
+                outer_annulus[x,y] = 0
+            else:
+                inner_annulus[x,y] = 1
+                middle_annulus[x,y] = 1
+                outer_annulus[x,y] = 1
+
+    return inner_annulus, middle_annulus, outer_annulus
+
+def band_plot(image_r, image_g, image_u, cmap):
+    """
+        Recieves image arrays in three bands and plots them according to a given
+        colour map, on a log scale.
+    """
+    from matplotlib.colors import LogNorm
+    figure, ax_array = plt.subplots(1,3)
+    ax_array[0].imshow(image_r[400:600,400:600], cmap=cmap, origin='lower', norm=LogNorm())
+    ax_array[1].imshow(image_g[400:600,400:600], cmap=cmap, origin='lower', norm=LogNorm())
+    ax_array[1].scatter(524-400, 503-400, s=2, c='red', marker='o')
+    ax_array[1].scatter(472-400, 496-400, s=2, c='red', marker='o')
+    ax_array[1].scatter(487-400, 473-400, s=2, c='red', marker='o')
+    ax_array[2].imshow(image_u[400:600,400:600], cmap=cmap, origin='lower', norm=LogNorm())
+    plt.show()
+
+def hist(list1, list2):
+    """
+    Recieves two lists of seeing values, creates a bin histogram of each and
+    displays tthe resulting plots.
+    """
+    figure, ax_array = plt.subplots(1,2)
+    ax_array[0].hist(list1, range=(3,10))
+    ax_array[1].hist(list2, range=(2,2.6))
+    plt.show()
