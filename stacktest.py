@@ -11,9 +11,7 @@ band = "G"
 unaligned_images = []
 
 for year in range(2012,2019):
-    unaligned_images += load_fits(path="data/SDSSJ094511-P1-images/",
-                                  year=str(year), band=band
-                                  )
+    unaligned_images += load_fits(path="data/fits/", year=str(year), band=band)
 
 for image in unaligned_images:
     # Get the rotation of the image in the stack.
