@@ -7,10 +7,10 @@ x, y, dx, dy = 450, 450, 75, 60
 # Define the proper location of the object, for alignment.
 proper_coords = degrees(("09:45:11.08","17:45:44.80"))
 
-band = "G"
+band = "R"
 unaligned_images = []
 
-for year in range(2012,2019):
+for year in range(2012,2014):
     unaligned_images += load_fits(path="data/fits/", year=str(year), band=band)
 
 for image in unaligned_images:
@@ -29,16 +29,22 @@ for image in unaligned_images:
     size_1, size_2 = image["data"].shape
     if size_1 != 1024 or size_2 != 1024:
         image["data"] = image["data"][512:1536,512:1536]
-    plt.imshow(image["data"], cmap='viridis', origin='lower', norm=LogNorm())
-    plt.show()
-    plt.clf()
+    # plt.imshow(image["data"], cmap='viridis', origin='lower', norm=LogNorm())
+    # plt.show()
+    # plt.clf()
 
 
-# aligned_images = align(unaligned_images, centroid=manual_centroid)
-# stacked_image = stack(aligned_images, correct_exposure=False)
-# plt.imshow(stacked_image["data"][475:575,450:550], cmap='viridis', origin='lower', norm=LogNorm())
-# plt.show()
+aligned_images = align(unaligned_images, centroid=manual_centroid)
+stacked_image = stack(aligned_images, correct_exposure=False)
+plt.imshow(stacked_image["data"][475:575,450:550], cmap='viridis', origin='lower', norm=LogNorm())
+# plt.savefig("plots/manual_centroid_{}_stack.eps".format(band),
+#             bbox_inches="tight", pad_inches=0, dpi=1200, format="eps"
+#             )
+# plt.savefig("plots/manual_centroid_{}_stack.png".format(band),
+#             bbox_inches="tight", pad_inches=0, dpi=1200, format="png"
+#             )
+plt.show()
 
-plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
-rgb(rgu_images[0][:1024,:1024], rgu_images[1][:1024,:1024], rgu_images[2][:1024,:1024])
-hist(seeing_pixels, seeing_arcsec)
+# plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
+# rgb(rgu_images[0][:1024,:1024], rgu_images[1][:1024,:1024], rgu_images[2][:1024,:1024])
+# hist(seeing_pixels, seeing_arcsec)
