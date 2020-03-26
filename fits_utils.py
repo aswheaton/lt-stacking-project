@@ -302,14 +302,29 @@ def degrees(coordinates):
     dec = 360 * (float(dec_str[0]) / 24 + float(dec_str[1]) / 1440 + float(dec_str[2]) / 86400)
     return((ra, dec))
 
-def wcs_offset(proper_coords, image):
-    central_image_coords = (image[0].header["CRPIX1"], image[0].header["CRPIX2"])
-    ra_offset = degrees(proper_coords)[0] - degrees(central_image_coords)[0]
-    dec_offset = degrees(proper_coords)[1] - degrees(central_image_coords)[1]
-    ra_pix = image[0].header["CDELT1"]
-    dec_pix = image[0].header["CDELT2"]
-    pix_offset = (ra_pix * ra_offset, dec_pix * dec_offset)
-    obj_guess = (pix_offset[0] + central_image_coords[0], pix_offset[1] + central_image_coords[1])
+def wcs_centroid(proper_coords, image):
+    """
+    Estimates the location in pixels of an object at proper coordinates using
+    the WCS data from the FITS file header.
+
+    Args:
+        proper_coords: tuple, proper coordinates of the object in degrees
+        image: dict, contains image array and associated metadata
+    Returns:
+        obj_coords: tuple, coordinates of the object in pixels
+    """
+    # Get the RA and DEC of the central pixel and object from metadata.
+    central_ra, central_dec = image["aref"], image["dref"]
+    object_ra, object_dec = proper_coords
+    # Calculate the RA and DEC offset vectors in degrees.
+    ra_offset = object_ra - central_ra
+    dec_offset = object_dec - central_dec
+    # Get the offset vectors in pixels.
+    ra_offset *= image["ascale"]
+    dec_offset *= image["dscale"]
+    # Get and return a guess at the location of the object in the image.
+    # TODO: Do not hard code the value of the reference pixel.
+    obj_guess = (ra_offset + 512.0, dec_offset + 512.0)
     return(obj_guess)
 
 def annuli_mask(array, center, radii):
