@@ -56,18 +56,21 @@ def load_fits(**kwargs):
             if year in filename and band in filename:
                 print(year, band, " matched ", filename)
                 with fits.open(root+filename) as hdul:
-                    new_image = {}
-                    new_image["filename"] = filename
-                    new_image["data"] = hdul[0].data
-                    new_image["year"] = year
-                    new_image["band"] = band
-                    new_image["rot1"] = hdul[0].header["CROTA1"]
-                    new_image["rot2"] = hdul[0].header["CROTA1"]
-
+                    new_image = {"filename" : filename,
+                                 "data"     : hdul[0].data,
+                                 "year"     : year,
+                                 "band"     : band,
+                                 "rot1"     : hdul[0].header["CROTA1"],
+                                 "rot2"     : hdul[0].header["CROTA1"],
+                                 "aref"     : hdul[0].header["CRVAL1"],
+                                 "dref"     : hdul[0].header["CRVAL2"],
+                                 "ascale"   : hdul[0].header["CDELT1"],
+                                 "dscale"   : hdul[0].header["CDELT2"]
+                                 }
                     images.append(new_image)
     return(images)
 
-def write_out_fits(image, filename):
+def legacy_write_out_fits(image, filename):
     """
     Creates a header for an ndarray of reduced data and then creates a new fits
     file of this data.
@@ -79,7 +82,7 @@ def write_out_fits(image, filename):
     hdul = fits.HDUList([fits.PrimaryHDU(image)])
     hdul.writeto(filename, overwrite=True)
 
-def write_out_fits_2(image, filename):
+def write_out_fits(image, filename):
     """
     Creates a header for an ndarray of reduced data and then creates a new fits
     file of this data.
@@ -102,10 +105,10 @@ def get_click_coord(array):
     fig = plt.figure()
     ax = fig.add_subplot(111)
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
-    plt.imshow(array[400:600,400:600], cmap='viridis', origin='lower', norm=LogNorm())
+    plt.imshow(array[375:625,375:635], cmap='viridis', origin='lower', norm=LogNorm())
     plt.show()
 
-    floored_point = (int(np.trunc(point)[0])+400, int(np.trunc(point)[1])+400)
+    floored_point = (int(np.trunc(point)[0])+375, int(np.trunc(point)[1])+375)
 
     return(floored_point)
 
