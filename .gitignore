@@ -138,8 +138,11 @@ dmypy.json
 *.run.xml
 *.toc
 
+<<<<<<< HEAD
 # Don't commit the SHP template to tree.
 SH-Lab-Template.tex
 
+=======
+>>>>>>> f5febfe8a8cfc7e05d56375210fbb8d60f099ea3
 # Don't commit signature vector image to tree.
 signature_repaired.eps
