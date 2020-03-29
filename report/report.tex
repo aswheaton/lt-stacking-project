@@ -33,6 +33,7 @@
 \usepackage{wrapfig} % Image/tables in multicols with \wrapfigure or \wraptable.
 \usepackage{caption} % Captions for single images.
 \usepackage{subcaption} % Captions for simultaneous images.
+\graphicspath{ {./img/} }
 
 % Not sure what this is for. %
 
@@ -103,7 +104,7 @@
 \hfill
 \begin{minipage}[t]{40mm}
     \makebox[40mm]{
-    \includegraphics[width=40mm]{img/crest.eps}}
+    \includegraphics[width=40mm]{crest.eps}}
 \end{minipage}
 \par\noindent                                           % Centre Title, and name
 \vspace*{2cm}
@@ -130,11 +131,10 @@
         I declare that this project and report is my own work.
 \end{quotation}
 
-%\vspace*{2cm}
-Signature:\hspace*{8cm}Date: \today
+\hspace*{1cm}Signature:\hspace*{1cm}\includegraphics[width=6cm]{signature_repaired.eps}\hspace*{1cm}Date: \today
 
 \vfill
-{\bf Supervisor:} Professor A. Lawrence, FRSE, FRaS
+\noindent{\bf Supervisor:} Professor A. Lawrence, FRSE, FRaS
 \hfill
 12 Weeks
 
@@ -149,6 +149,13 @@ Signature:\hspace*{8cm}Date: \today
 \cite{bruce_2017}
 
 \section{The Liverpool Telescope Data}
+\begin{figure}[h!]
+    \includegraphics{seeing_hist_U_band.png}
+    \includegraphics{seeing_hist_G_band.png}
+    \includegraphics{seeing_hist_R_band.png}
+    \caption{Astronomical seeing of the LT data in Johnson UGR bands.}
+    \label{fig:seeing}
+\end{figure}
 \subsection{S/N Ratio and Astronomical Seeing}
 \section{Centroiding on J094511}
 \subsection{Initial Guess: Max-Value Centroiding}
