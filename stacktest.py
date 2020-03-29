@@ -1,3 +1,4 @@
+import sys
 from fits_utils import *
 
 # Empty list for collecting stacked images in three bands.
@@ -7,7 +8,7 @@ x, y, dx, dy = 450, 450, 75, 60
 # Define the proper location of the object, for alignment.
 proper_coords = degrees(("09:45:11.08","17:45:44.80"))
 
-band = "U"
+band = str(sys.argv[1])
 unaligned_images = []
 
 for year in range(2012,2019):
@@ -42,22 +43,6 @@ for image in unaligned_images:
 
 bins=[0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75]
 
-# height = [np.histogram( xs, bins=bins)[0] for xs in [seeing_vals]]
-# left, n = np.arange(len(bins)-1), len(height)
-# ax = plt.subplot(111)
-# for j, h in enumerate(height):
-#     ax.bar(left + j / n, h, width=1.0/n, color='b')
-# ax.set_xticks(np.arange(0, len(bins))-0.5)
-# ax.set_xticklabels(bins)
-
-# hist, bin_edges = np.histogram(seeing_vals,bins) # make the histogram
-# fig,ax = plt.subplots()
-# Plot the histogram heights against integers on the x axis
-# ax.bar(range(len(hist)),hist,width=1)
-# Set the ticks to the middle of the bars
-# ax.set_xticks([0.5+i for i,j in enumerate(hist)])
-# Set the xticklabels to a string that tells us what the bin edges were
-# ax.set_xticklabels(['0','0.5','1','1.5','2','2.5','3','1000'])
 print("Max: {}".format(max(seeing_vals)))
 print("Mean: {}".format(np.mean(seeing_vals)))
 print("StDev: {}".format(np.std(seeing_vals)))
@@ -70,7 +55,7 @@ plt.axvline(np.mean(seeing_vals)+3*np.std(seeing_vals), color='r', linestyle='da
 plt.title("Astronomical Seeing in {}-band".format(band))
 plt.xlim([min(bins),max(bins)])
 plt.xticks(bins)
-plt.savefig("report/img/seeing_hist_{}_band.png".format(band))
+plt.savefig("report/img/seeing_hist_{}_band.eps".format(band),bbox_inches="tight", pad_inches=0)
 plt.show()
 plt.clf()
 
@@ -86,7 +71,7 @@ plt.clf()
 # plt.imshow(stacked_image["data"][475:575,450:550], cmap='viridis', origin='lower', norm=LogNorm())
 
 # plt.savefig("plots/manual_centroid_{}_stack.eps".format(band),
-#             bbox_inches="tight", pad_inches=0, dpi=1200, format="eps"
+#             bbox_inches="tight", pad_inches="0", dpi=1200, format="eps"
 #             )
 # plt.savefig("plots/manual_centroid_{}_stack.png".format(band),
 #             bbox_inches="tight", pad_inches=0, dpi=1200, format="png"
