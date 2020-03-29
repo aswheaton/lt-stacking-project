@@ -129,6 +129,7 @@ dmypy.json
 .pyre/
 
 # LaTeX generated files.
+*-converted-to.pdf
 *-blx.bib
 *.bbl
 *.blg
@@ -136,3 +137,9 @@ dmypy.json
 *.log
 *.run.xml
 *.toc
+
+# Don't commit the SHP template to tree.
+SH-Lab-Template.tex
+
+# Don't commit signature vector image to tree.
+signature_repaired.eps
