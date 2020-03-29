@@ -31,6 +31,7 @@ import configparser
 from matplotlib.colors import LogNorm
 from scipy.stats import mode
 from scipy.ndimage import gaussian_filter
+from scipy import optimize
 from pathlib import Path
 from astropy.io import fits
 from os import walk
@@ -60,6 +61,7 @@ def load_fits(**kwargs):
                                  "data"     : hdul[0].data,
                                  "year"     : year,
                                  "band"     : band,
+                                 "seeing"   : hdul[0].header["L1SEESEC"],
                                  "rot1"     : hdul[0].header["CROTA1"],
                                  "rot2"     : hdul[0].header["CROTA1"],
                                  "aref"     : hdul[0].header["CRVAL1"],
@@ -243,8 +245,6 @@ def manual_centroid(image_data, **kwargs):
     # Get the mean weighted average of the smaller cutout.
     x_new, y_new = weighted_mean_2D(cutout, floor=True)
     return((x_new, y_new))
-
-from scipy import optimize
 
 def gaussian(height, center_x, center_y, width_x, width_y):
     """
