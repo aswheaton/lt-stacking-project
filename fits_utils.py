@@ -287,8 +287,8 @@ def radians(coordinates):
     And returns a tuple of the equivalent values in radians.
     """
     ra_str, dec_str = coordinates[0].split(":"), coordinates[1].split(":")
-    ra = np.pi * (ra_str[0] / 12 + ra_str[1] / 720 + ra_str[2] / 43200)
-    dec = np.pi * (dec_str[0] / 12 + dec_str[1] / 720 + dec_str[2] / 43200)
+    ra = 2.0 * np.pi * (float(ra_str[0]) / 24 + float(ra_str[1]) / 1440 + float(ra_str[2]) / 86400)
+    dec = np.pi / 180.0 * (float(dec_str[0]) + (float(dec_str[1]) / 60) + (float(dec_str[2]) / 3600))
     return((ra, dec))
 
 def degrees(coordinates):
@@ -299,7 +299,7 @@ def degrees(coordinates):
     """
     ra_str, dec_str = coordinates[0].split(":"), coordinates[1].split(":")
     ra = 360 * (float(ra_str[0]) / 24 + float(ra_str[1]) / 1440 + float(ra_str[2]) / 86400)
-    dec = 360 * (float(dec_str[0]) / 24 + float(dec_str[1]) / 1440 + float(dec_str[2]) / 86400)
+    dec = float(dec_str[0]) + (float(dec_str[1]) / 60) + (float(dec_str[2]) / 3600)
     return((ra, dec))
 
 def wcs_centroid(proper_coords, image):
