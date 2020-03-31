@@ -6,7 +6,8 @@ rgu_images = []
 # Define the cutout region containing the reference object.
 x, y, dx, dy = 450, 450, 75, 60
 # Define the proper location of the object, for alignment.
-proper_coords = degrees(("09:45:11.08","17:45:44.80"))
+proper_coords = degrees(("09:45:11.08","17:45:44.78"))
+print(proper_coords)
 
 band = str(sys.argv[1])
 unaligned_images = []
@@ -40,31 +41,38 @@ for image in unaligned_images:
         pass
     else:
         seeing_vals.append(image["seeing"])
-
-bins=[0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75]
-
 print("Max: {}".format(max(seeing_vals)))
 print("Mean: {}".format(np.mean(seeing_vals)))
 print("StDev: {}".format(np.std(seeing_vals)))
-plt.hist(seeing_vals, bins=bins)
-plt.axvline(np.mean(seeing_vals)-np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
-plt.axvline(np.mean(seeing_vals), color='b', linestyle='dashed', linewidth=1)
-plt.axvline(np.mean(seeing_vals)+np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
-plt.axvline(np.mean(seeing_vals)+2*np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
-plt.axvline(np.mean(seeing_vals)+3*np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
-plt.title("Astronomical Seeing in {}-band".format(band))
-plt.xlim([min(bins),max(bins)])
-plt.xticks(bins)
-plt.savefig("report/img/seeing_hist_{}_band.eps".format(band),bbox_inches="tight", pad_inches=0)
-plt.show()
-plt.clf()
+seeing_filtered_images = []
+for image in unaligned_images:
+    if image["seeing"] <= np.mean(seeing_vals) + np.std(seeing_vals):
+        seeing_filtered_images.append(image)
+unaligned_images = seeing_filtered_images
 
-# for image in unaligned_images:
-#     obj_ra, obj_dec = wcs_centroid(proper_coords, image)
-#     plt.imshow(image["data"][475:575,450:550], cmap='viridis', origin='lower', norm=LogNorm())
-#     plt.scatter(obj_dec-475.0, obj_ra-475.0, s=2, c='red', marker='o')
-#     plt.show()
-#     plt.clf()
+# bins=[0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75]
+# plt.hist(seeing_vals, bins=bins)
+# plt.axvline(np.mean(seeing_vals)-np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
+# plt.axvline(np.mean(seeing_vals), color='b', linestyle='dashed', linewidth=1)
+# plt.axvline(np.mean(seeing_vals)+np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
+# plt.axvline(np.mean(seeing_vals)+2*np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
+# plt.axvline(np.mean(seeing_vals)+3*np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
+# plt.title("Astronomical Seeing in {}-band".format(band))
+# plt.xlim([min(bins),max(bins)])
+# plt.xticks(bins)
+# plt.savefig("report/img/seeing_hist_{}_band.eps".format(band),bbox_inches="tight", pad_inches=0)
+# plt.show()
+# plt.clf()
+
+for image in unaligned_images:
+    obj_ra, obj_dec = wcs_centroid(proper_coords, image)
+    # print("AREF: {}\nDREF: {}".format(image["aref"], image["dref"]))
+    # print("APIX: {}\nDPIX: {}".format(obj_ra, obj_dec))
+    plt.imshow(image["data"][475:575,450:550], cmap='viridis', origin='lower', norm=LogNorm())
+    plt.scatter(512.0-475.0, 512.0-475.0, s=8, c='red', marker='o')
+    plt.scatter(obj_ra-475.0, obj_dec-475.0, s=2, c='red', marker='o')
+    plt.show()
+    plt.clf()
 
 # aligned_images = align(unaligned_images, centroid=manual_centroid)
 # stacked_image = stack(aligned_images, correct_exposure=False)

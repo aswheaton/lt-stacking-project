@@ -314,14 +314,16 @@ def wcs_centroid(proper_coords, image):
         obj_coords: tuple, coordinates of the object in pixels
     """
     # Get the RA and DEC of the central pixel and object from metadata.
-    central_ra, central_dec = image["aref"], image["dref"]
+    central_ra = image["aref"] - 24.0 * image["ascale"]
+    central_dec = image["dref"] - 1.0 * image["dscale"]
     object_ra, object_dec = proper_coords
     # Calculate the RA and DEC offset vectors in degrees.
     ra_offset = object_ra - central_ra
     dec_offset = object_dec - central_dec
     # Get the offset vectors in pixels.
-    ra_offset *= image["ascale"]
-    dec_offset *= image["dscale"]
+    ra_offset /= image["ascale"]
+    dec_offset /= image["dscale"]
+    print(ra_offset, dec_offset)
     # Get and return a guess at the location of the object in the image.
     # TODO: Do not hard code the value of the reference pixel.
     obj_guess = (ra_offset + 512.0, dec_offset + 512.0)
