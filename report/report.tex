@@ -121,14 +121,23 @@
 \vspace*{5mm}
 
 \begin{abstract}
-        \lipsum[1]
+    In this project, I examine the unusual luminosity of the galactic nucleus
+    SDSS J094511 located at redshift $Z=?$ using data gathered with the
+    Liverpool Telescope on Las Palmas between 2012 and 2018. I develop several
+    algorithms for centroiding on the object, for resampling to obtain higher
+    resolution, and for stacking images to increase the S/N ratio in the frame.
+    I extract radial and linear cross sections from the object and compare these
+    to the point-spread-function of the Liverpool Telescope CCD to corroborate
+    the hypothesis that linear increases in the luminosity are \textit{not} due
+    to instability of the viscous AGN accretion disk, but a gravitational
+    microlensing event by a star in an intervening galaxy or dwarf galaxy.
 \end{abstract}
 
 \vspace*{1cm}
 
 \subsubsection*{Declaration}
 \begin{quotation}
-        I declare that this project and report is my own work.
+    I declare that this project and report is my own work.
 \end{quotation}
 
 \hspace*{1cm}Signature:\hspace*{1cm}\includegraphics[width=6cm]{signature_repaired.eps}\hspace*{1cm}Date: \today
@@ -149,19 +158,41 @@
 \cite{bruce_2017}
 
 \section{The Liverpool Telescope Data}
+
 \begin{figure}[h!]
     \includegraphics[width=0.32\textwidth]{seeing_hist_U_band.eps}
-    \includegraphics[width=0.32\textwidth]{seeing_hist_G_band.eps}  \includegraphics[width=0.32\textwidth]{seeing_hist_R_band.eps}
+    \includegraphics[width=0.32\textwidth]{seeing_hist_G_band.eps}
+    \includegraphics[width=0.32\textwidth]{seeing_hist_R_band.eps}
     \caption{Astronomical seeing of the LT data in Johnson UGR bands.}
     \label{fig:seeing}
 \end{figure}
+
+There are several technical problems associated with the Liverpool Telescope
+(LT) data. In many frames, astronomical seeing is very poor. All frames,
+particularly in the U-band, are littered with hot pixels or cosmic rays
+detections.
+
+A single image of J094511 in the U-band has a seeing of $r_0=999.0''$, which is
+likely an error. For this reason, the image has been thrown out and its seeing
+parameter excluded from the calculation of the mean and standard deviation of
+the seeing data.
+
 \subsection{S/N Ratio and Astronomical Seeing}
 \section{Centroiding on J094511}
 \subsection{Initial Guess: Max-Value Centroiding}
 \subsection{Initial Guess: WCS Centroiding}
-\cite{lang_2010}
-\cite{greisen_2002}
-\cite{calabretta_2002}
+
+\begin{figure}[h!]
+    \includegraphics[width=0.32\textwidth]{wcs_centroid_U_stack.eps}
+    \includegraphics[width=0.32\textwidth]{wcs_centroid_G_stack.eps}
+    \includegraphics[width=0.32\textwidth]{wcs_centroid_R_stack.eps}
+    \caption{Image stack of J094511 in the Johnson UGR bands.}
+    \label{fig:wcs_centroids}
+\end{figure}
+
+% \cite{lang_2010}
+% \cite{greisen_2002}
+% \cite{calabretta_2002}
 \subsection{Refinement: Two Dimensional Weighted Mean}
 \subsection{Aperture Centroiding}
 \subsection{Challenges in the U-band}
@@ -169,10 +200,11 @@
 \subsection{Linear and Radial Cross Sections}
 \subsection{Excess Luminosity in the Wings}
 \subsection{Point Spread Function Subtraction}
-
+\section{Analysis}
 \section{Conclusion}
 
-\printbibliography
+
+
 
 \section*{Appendix A: Alignment Algorithm}
 
