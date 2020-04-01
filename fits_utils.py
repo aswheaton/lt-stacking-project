@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 """
 fits-utils module
@@ -96,21 +96,30 @@ def write_out_fits(image, filename):
     hdul = fits.HDUList([fits.PrimaryHDU(image["data"])])
     hdul.writeto(filename, overwrite=True)
 
-def get_click_coord(array):
+def get_click_coord(array, **kwargs):
 
     def onclick(click):
         global point
-        # Reversed because (row, column) = (y, x)
-        point = (click.ydata,click.xdata)
+        # In image coordinates, recall that (row, column) = (y, x)
+        point = (click.xdata,click.ydata)
         return(point)
+
+    if "marker" in kwargs:
+        marker = kwargs.get("marker")
+        x_low, x_high = int(np.floor(marker[0]))-15, int(np.floor(marker[0]))+15
+        y_low, y_high = int(np.floor(marker[1]))-15, int(np.floor(marker[1]))+15
+    else:
+        x_low, y_low, x_high, y_high = 350, 350, 650, 650
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
     cid = fig.canvas.mpl_connect('button_press_event', onclick)
-    plt.imshow(array[375:625,375:635], cmap='viridis', origin='lower', norm=LogNorm())
+    plt.imshow(array[y_low:y_high,x_low:x_high], cmap='viridis', origin='lower', norm=LogNorm())
+    if "marker" in kwargs:
+        plt.scatter(marker[0]-x_low, marker[1]-y_low, s=5, c='red', marker='o')
     plt.show()
 
-    floored_point = (int(np.trunc(point)[0])+375, int(np.trunc(point)[1])+375)
+    floored_point = (int(np.trunc(point[0]))+x_low, int(np.trunc(point[1]))+y_low)
 
     return(floored_point)
 
@@ -134,6 +143,73 @@ def weighted_mean_2D(cutout,**kwargs):
     else:
         return((x_avg, y_avg))
 
+def manual_centroid(image_data, **kwargs):
+    plt.imshow(image_data, cmap='viridis', origin='lower', norm=LogNorm())
+    plt.show()
+    rotations = int(input("\nRotate cc: "))
+    image_data = np.rot90(image_data, rotations)
+    x_guess, y_guess = get_click_coord(image_data)
+    cutout = np.array(image_data[x_guess-5:x_guess+5,
+                                 y_guess-5:y_guess+5
+                                 ])
+    # Get the mean weighted average of the smaller cutout.
+    x_new, y_new = weighted_mean_2D(cutout, floor=True)
+    return((x_new, y_new))
+
+def wcs_centroid(image, **kwargs):
+    """
+    Estimates the location in pixels of an object at proper coordinates using
+    the WCS data from the FITS file header.
+
+    Args:
+        proper_coords: tuple, proper coordinates of the object in degrees
+        image: dict, contains image array and associated metadata
+    Returns:
+        obj_coords: tuple, coordinates of the object in pixels
+    """
+    # Unpack parameters from keyword arguments.
+    proper_coords = kwargs.get("proper_coords")
+    cor_x, cor_y = kwargs.get("correction_factor")
+    # Get the RA and DEC of the central pixel and object from metadata.
+    central_ra = image["aref"] + cor_x * image["ascale"]
+    central_dec = image["dref"] + cor_y * image["dscale"]
+    object_ra, object_dec = proper_coords
+    # Calculate the RA and DEC offset vectors in degrees.
+    ra_offset = object_ra - central_ra
+    dec_offset = object_dec - central_dec
+    # Get the offset vectors in pixels.
+    ra_offset /= image["ascale"]
+    dec_offset /= image["dscale"]
+    # Get and return a guess at the location of the object in the image.
+    # TODO: Do not hard code the value of the reference pixel.
+    if kwargs.get("floor") == True:
+        obj_guess = (int(np.floor(ra_offset + 512.0)),
+                     int(np.floor(dec_offset + 512.0))
+                     )
+        return(obj_guess)
+    else:
+        obj_guess = (ra_offset + 512.0, dec_offset + 512.0)
+        return(obj_guess)
+
+def hybrid_centroid(image, **kwargs):
+    """
+    Recieves an image dictionary and returns a guess at the location of an
+    object at proper_coords using a the manual method, with a WCS marker to aid
+    the user in selecting the object.
+
+    Args:
+        image: an image dictionary.
+        proper_coords: tuple, literature coordinates of the object in degrees.
+    Returns:
+        (y_guess, x_guess): tuple, array coordinates of the object centroid.
+    """
+    wcs_x, wcs_y = wcs_centroid(image, proper_coords=kwargs.get("proper_coords"),
+                                correction_factor=(0,0), floor=False
+                                )
+    x_guess, y_guess = get_click_coord(image["data"], marker=(wcs_x,wcs_y))
+    # Reverse order to map (y,x) --> (row,col)
+    return((y_guess, x_guess))
+
 def align(images, **kwargs):
     """
     Recieves a list of image arrays containing a common object to use for
@@ -153,16 +229,23 @@ def align(images, **kwargs):
     filter = kwargs.get("filter")
     # Find the centroid of the reference star in each image.
     x_centroids, y_centroids = [], []
+
     print("---Beginning Alignment---")
-    counter = 0
     for image in images:
-        counter += 1
-        print("---Finding Centre {} of {}".format(counter, len(images)), end="\r")
-        x_guess, y_guess = get_click_coord(image["data"])
-        cutout = image["data"][x_guess-5:x_guess+5,
-                               y_guess-5:y_guess+5
-                               ]
+
+        image_index = np.where(images==image)[0] + 1
+        print("---Finding Centre {} of {}".format(image_index, len(images)), end="\r")
+
+        # Get an initial guess for the centroid using a specified function.
+        if centroid_func == manual_centroid:
+            x_guess, y_guess = get_click_coord(image["data"])
+        if centroid_func == wcs_centroid:
+            y_guess, x_guess = wcs_centroid(image, proper_coords=kwargs.get("proper_coords"), correction_factor=(-24,-1), floor=True)
+        if centroid_func == hybrid_centroid:
+            x_guess, y_guess = hybrid_centroid(image, proper_coords=kwargs.get("proper_coords"))
+
         # Get the mean weighted average of the smaller cutout.
+        cutout = image["data"][x_guess-5:x_guess+5,y_guess-5:y_guess+5]
         x_new, y_new = weighted_mean_2D(cutout, floor=True)
         # Map the coordinates back to the whole image.
         x_new = x_guess + x_new - 5
@@ -184,7 +267,7 @@ def align(images, **kwargs):
         print("---Aligning Image {} of {}".format(counter, len(images)), end="\r")
         # Determine region in which to cast the image.
         disp_x, disp_y = max_pos_x - image["XCENT"], max_pos_y - image["YCENT"]
-        print("\nShifting image {} by {}, {}".format(counter,disp_x,disp_y))
+        # print("\nShifting image {} by {}, {}".format(counter,disp_x,disp_y))
         imsize_x, imsize_y = image["data"].shape[0], image["data"].shape[1]
         # Create new array containing aligned image data.
         aligned_image_data = np.zeros((imsize_x+max_dif_x, imsize_y+max_dif_y), dtype=int)
@@ -232,19 +315,6 @@ def stack(aligned_image_stack, **kwargs):
     stacked_image = {"data" : stacked_image_data}
 
     return(stacked_image)
-
-def manual_centroid(image_data, **kwargs):
-    plt.imshow(image_data, cmap='viridis', origin='lower', norm=LogNorm())
-    plt.show()
-    rotations = int(input("\nRotate cc: "))
-    image_data = np.rot90(image_data, rotations)
-    x_guess, y_guess = get_click_coord(image_data)
-    cutout = np.array(image_data[x_guess-5:x_guess+5,
-                                 y_guess-5:y_guess+5
-                                 ])
-    # Get the mean weighted average of the smaller cutout.
-    x_new, y_new = weighted_mean_2D(cutout, floor=True)
-    return((x_new, y_new))
 
 def gaussian(height, center_x, center_y, width_x, width_y):
     """
@@ -301,33 +371,6 @@ def degrees(coordinates):
     ra = 360 * (float(ra_str[0]) / 24 + float(ra_str[1]) / 1440 + float(ra_str[2]) / 86400)
     dec = float(dec_str[0]) + (float(dec_str[1]) / 60) + (float(dec_str[2]) / 3600)
     return((ra, dec))
-
-def wcs_centroid(proper_coords, image):
-    """
-    Estimates the location in pixels of an object at proper coordinates using
-    the WCS data from the FITS file header.
-
-    Args:
-        proper_coords: tuple, proper coordinates of the object in degrees
-        image: dict, contains image array and associated metadata
-    Returns:
-        obj_coords: tuple, coordinates of the object in pixels
-    """
-    # Get the RA and DEC of the central pixel and object from metadata.
-    central_ra = image["aref"] - 24.0 * image["ascale"]
-    central_dec = image["dref"] - 1.0 * image["dscale"]
-    object_ra, object_dec = proper_coords
-    # Calculate the RA and DEC offset vectors in degrees.
-    ra_offset = object_ra - central_ra
-    dec_offset = object_dec - central_dec
-    # Get the offset vectors in pixels.
-    ra_offset /= image["ascale"]
-    dec_offset /= image["dscale"]
-    print(ra_offset, dec_offset)
-    # Get and return a guess at the location of the object in the image.
-    # TODO: Do not hard code the value of the reference pixel.
-    obj_guess = (ra_offset + 512.0, dec_offset + 512.0)
-    return(obj_guess)
 
 def annuli_mask(array, center, radii):
     """
