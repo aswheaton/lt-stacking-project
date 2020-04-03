@@ -74,11 +74,25 @@ unaligned_images = seeing_filtered_images
 
 aligned_images = align(unaligned_images, centroid=wcs_centroid, proper_coords=proper_coords)
 stacked_image = stack(aligned_images, correct_exposure=False)
-plt.imshow(stacked_image["data"][553:573,565:585], cmap='viridis', origin='lower', norm=LogNorm())
-plt.title("J094511, {}-band".format(band))
-plt.savefig("report/img/wcs_centroid_{}_stack.eps".format(band),bbox_inches="tight", pad_inches=0)
-
+# plt.imshow(stacked_image["data"][553:573,565:585], cmap='viridis', origin='lower', norm=LogNorm())
+# plt.title("J094511, {}-band".format(band))
+# plt.savefig("report/img/wcs_centroid_{}_stack.eps".format(band),bbox_inches="tight", pad_inches=0)
 # plt.show()
+
+# Devise an initial guess for the gaussian based on properties of the stack.
+# Tuple of format: (amplitude, xo, yo, sigma_x, sigma_y, theta, offset)
+cropped_data = np.array(stacked_image["data"][553:573,565:585])
+amplitude = np.max(cropped_data) - np.median(cropped_data)
+xo, yo = weighted_mean_2D(cropped_data)
+sigma_x, sigma_y = 5.0, 5.0
+theta = 0
+offset = np.median(cropped_data)
+initial_guess = (amplitude, xo, yo, sigma_x, sigma_y, theta, offset)
+# Fit the data using scipy.optimize and get the covariant matrix of the gaussian.
+p_opt, p_cov = gaussian_fit(data=stacked_image["data"][553:573,565:585],
+                            guess=initial_guess)
+
+print(p_opt, p_cov)
 
 # plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
 # rgb(rgu_images[0][:1024,:1024], rgu_images[1][:1024,:1024], rgu_images[2][:1024,:1024])

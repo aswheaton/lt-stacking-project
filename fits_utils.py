@@ -316,39 +316,73 @@ def stack(aligned_image_stack, **kwargs):
 
     return(stacked_image)
 
-def gaussian(height, center_x, center_y, width_x, width_y):
-    """
-    Returns a gaussian function with the given parameters.
-    """
-    width_x = float(width_x)
-    width_y = float(width_y)
-    return lambda x,y: height*np.exp(-(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
+def gaussian_2D(coords, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
+    (x, y) = coords
+    xo = float(xo)
+    yo = float(yo)
+    a = (np.cos(theta)**2)/(2*sigma_x**2) + (np.sin(theta)**2)/(2*sigma_y**2)
+    b = -(np.sin(2*theta))/(4*sigma_x**2) + (np.sin(2*theta))/(4*sigma_y**2)
+    c = (np.sin(theta)**2)/(2*sigma_x**2) + (np.cos(theta)**2)/(2*sigma_y**2)
+    g = offset + amplitude*np.exp(-(a*((x-xo)**2)
+                                    + 2*b*(x-xo)*(y-yo)
+                                    + c*((y-yo)**2)
+                                    )
+                                  )
+    return g.ravel()
 
-def moments(data):
+def gaussian_fit(**kwargs):
     """
-    Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D
-    distribution by calculating its moments.
-    """
-    total = data.sum()
-    X, Y = np.indices(data.shape)
-    x = (X * data).sum() / total
-    y = (Y * data).sum() / total
-    col = data[:,int(y)]
-    width_x = np.sqrt(np.abs((np.arange(col.size) - y)**2 * col).sum() / col.sum())
-    row = data[int(x), :]
-    width_y = np.sqrt(np.abs((np.arange(row.size) - x)**2 * row).sum() / row.sum())
-    height = data.max()
-    return height, x, y, width_x, width_y
+    Takes a 2D array of values and returns a gaussian fit to those values,
+    derived from an initial guess and using scipy.optimize.
 
-def fitgaussian(data):
+    Args:
+
+    Returns:
+
     """
-    Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D
-    distribution found by a fit.
-    """
-    params = moments(data)
-    errorfunction = lambda p: np.ravel(gaussian(*p)(*np.indices(data.shape)) - data)
-    p, success = optimize.leastsq(errorfunction, params)
-    return(p)
+    data = kwargs.get("data")
+    initial_guess = kwargs.get("guess")
+    x = np.array(range(data.shape[0]))
+    y = np.array(range(data.shape[1]))
+    x, y = np.meshgrid(x, y)
+    import scipy.optimize as opt
+    p_opt, p_cov = opt.curve_fit(gaussian_2D, (x,y), data, p0=initial_guess)
+
+    return(p_opt, p_cov)
+
+# def gaussian(height, center_x, center_y, width_x, width_y):
+#     """
+#     Returns a gaussian function with the given parameters.
+#     """
+#     width_x = float(width_x)
+#     width_y = float(width_y)
+#     return lambda x,y: height*np.exp(-(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
+#
+# def moments(data):
+#     """
+#     Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D
+#     distribution by calculating its moments.
+#     """
+#     total = data.sum()
+#     X, Y = np.indices(data.shape)
+#     x = (X * data).sum() / total
+#     y = (Y * data).sum() / total
+#     col = data[:,int(y)]
+#     width_x = np.sqrt(np.abs((np.arange(col.size) - y)**2 * col).sum() / col.sum())
+#     row = data[int(x), :]
+#     width_y = np.sqrt(np.abs((np.arange(row.size) - x)**2 * row).sum() / row.sum())
+#     height = data.max()
+#     return height, x, y, width_x, width_y
+#
+# def fitgaussian(data):
+#     """
+#     Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D
+#     distribution found by a fit.
+#     """
+#     params = moments(data)
+#     errorfunction = lambda p: np.ravel(gaussian(*p)(*np.indices(data.shape)) - data)
+#     p, success = optimize.leastsq(errorfunction, params)
+#     return(p)
 
 def radians(coordinates):
     """
