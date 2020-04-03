@@ -43,7 +43,8 @@
 % Some utilities for scientific and mathematical writing. %
 
 \usepackage{siunitx} % Formatting for numbers with SI units.
-\usepackage{mathabx} % Astronomical symbols.
+\usepackage{amsmath} % Nice matrices.
+% \usepackage{mathabx} % Astronomical symbols.
 \usepackage{isotope} % Nice markup syntax for chemical symbols.
 \usepackage{xfrac}   % Slant fractions and other utilities.
 
@@ -182,7 +183,7 @@ the seeing data.
 \subsection{Initial Guess: Max-Value Centroiding}
 \subsection{Initial Guess: WCS Centroiding}
 
-\begin{figure}[h!]
+\begin{figure}[H]
     \includegraphics[width=0.32\textwidth]{wcs_centroid_U_stack.eps}
     \includegraphics[width=0.32\textwidth]{wcs_centroid_G_stack.eps}
     \includegraphics[width=0.32\textwidth]{wcs_centroid_R_stack.eps}
@@ -194,6 +195,44 @@ the seeing data.
 % \cite{greisen_2002}
 % \cite{calabretta_2002}
 \subsection{Refinement: Two Dimensional Weighted Mean}
+\subsection{Refinement: Gaussian Fitted Centroiding}
+
+In two dimensions, the power to which $e$ is raised in the Gaussian function is
+any negative-definite quadratic form.  Consequently, the level sets of the
+Gaussian will always be ellipses. A particular example of a two-dimensional
+Gaussian function is:
+
+\begin{equation}
+    f(x,y) = A \exp\left(- \left(\frac{(x-x_0)^2}{2\sigma_x^2} + \frac{(y-y_0)^2}{2\sigma_y^2} \right)\right)
+\end{equation}
+
+\noindent Here, the coefficient $A$ is the amplitude, $(x_0, y_0)$ is the center and
+$\sigma_x$, $\sigma_y$ are the $x$ and $y$ spreads of the blob. In general, a
+two-dimensional elliptical Gaussian function is expressed as:
+
+\begin{equation}
+    f(x,y) = A \exp\left(- \left(a(x - x_0)^2 + 2b(x-x_0)(y-y_0) + c(y-y_0)^2 \right)\right)
+\end{equation}
+
+\noindent Where the matrix:
+
+\begin{equation}
+    \begin{bmatrix} a & b \\ b & c \end{bmatrix}
+\end{equation}
+
+\noindent Is positive-definite. For the general form of the equation the
+coefficient $A$ is the height of the peak and $(x_0, y_0)$ is the center of the
+blob. If we set:
+
+\begin{align}
+a & = \frac{\cos^2\theta}{2\sigma_x^2} + \frac{\sin^2\theta}{2\sigma_y^2} \\
+b & = -\frac{\sin2\theta}{4\sigma_x^2} + \frac{\sin2\theta}{4\sigma_y^2} \\
+c & = \frac{\sin^2\theta}{2\sigma_x^2} + \frac{\cos^2\theta}{2\sigma_y^2}
+\end{align}
+
+then we rotate the blob by a clockwise angle $\theta$ (for counterclockwise
+rotation invert the signs in the $b$ coefficient). %<ref>{{cite web |last1=Nawri |first1=Nikolai |title=Berechnung von Kovarianzellipsen |url=http://imkbemu.physik.uni-karlsruhe.de/~eisatlas/covariance_ellipses.pdf |accessdate=14 August 2019}}</ref>
+
 \subsection{Aperture Centroiding}
 \subsection{Challenges in the U-band}
 \section{Cross Sections of J094511}
