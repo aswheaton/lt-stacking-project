@@ -91,7 +91,17 @@ initial_guess = (amplitude, xo, yo, sigma_x, sigma_y, theta, offset)
 # Fit the data using scipy.optimize and get the covariant matrix of the gaussian.
 p_opt, p_cov = gaussian_fit(data=stacked_image["data"][553:573,565:585],
                             guess=initial_guess)
-
+# Plot a contour map over the stacked object image.
+x = np.linspace(0, cropped_data.shape[0], cropped_data.shape[0])
+y = np.linspace(0, cropped_data.shape[1], cropped_data.shape[1])
+x, y  = np.meshgrid(x, y)
+fitted_data = gaussian_2D((x, y), *p_opt)
+plt.imshow(cropped_data, cmap='viridis', origin='lower', norm=LogNorm())
+plt.contour(x, y, fitted_data.reshape(20, 20), 7, colors='r')
+plt.title("Gaussian Fit on J094511, {}-band".format(band))
+# plt.savefig("report/img/gauss_fit_wcs_{}_stack.eps".format(band),bbox_inches="tight", pad_inches=0)
+plt.show()
+plt.clf()
 print(p_opt)
 
 # plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
