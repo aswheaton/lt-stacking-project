@@ -80,16 +80,23 @@ plt.title("J094511, {}-band".format(band))
 plt.show()
 
 cropped_stack = np.array(stacked_image["data"][553:573,565:585])
+amplitude = np.max(cropped_stack) - np.median(cropped_stack)
+xo, yo = weighted_mean_2D(cropped_stack)
+sigma_x, sigma_y = 2.5, 2.5
+theta = 0
+offset = np.median(cropped_stack)
 # Fit the data using scipy.optimize and get the covariant matrix of the gaussian.
-initial_guess = get_gauss_guess(cropped_stack)
+# initial_guess = (float(2.27384094e+03),float(9.36559309e+00),float(8.80586232e+00),float(2.68011181e+00),float(2.15738873e+00),float(-6.48237659e+0),float(2.63114428e+04))
+# initial_guess = get_gauss_guess(cropped_stack)
+initial_guess = (amplitude, xo, yo, sigma_x, sigma_y, theta, offset)
 params, covariance = gaussian_fit(data=cropped_stack, guess=initial_guess)
 
 # Plot a contour map over the stacked object image.
-x = np.linspace(0, cropped_data.shape[0], cropped_data.shape[0])
-y = np.linspace(0, cropped_data.shape[1], cropped_data.shape[1])
+x = np.linspace(0, cropped_stack.shape[0], cropped_stack.shape[0])
+y = np.linspace(0, cropped_stack.shape[1], cropped_stack.shape[1])
 x, y  = np.meshgrid(x, y)
 fitted_data = gaussian_2D((x, y), *params)
-plt.imshow(cropped_data, cmap='viridis', origin='lower', norm=LogNorm())
+plt.imshow(cropped_stack, cmap='viridis', origin='lower', norm=LogNorm())
 plt.contour(x, y, fitted_data.reshape(20, 20), 7, colors='r')
 plt.title("Gaussian Fit on J094511, {}-band".format(band))
 # plt.savefig("report/img/gauss_fit_wcs_{}_stack.eps".format(band),bbox_inches="tight", pad_inches=0)
