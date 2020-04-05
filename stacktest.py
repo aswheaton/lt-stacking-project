@@ -92,7 +92,7 @@ initial_guess = (amplitude, xo, yo, sigma_x, sigma_y, theta, offset)
 p_opt, p_cov = gaussian_fit(data=stacked_image["data"][553:573,565:585],
                             guess=initial_guess)
 
-print(p_opt, p_cov)
+print(p_opt)
 
 # plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
 # rgb(rgu_images[0][:1024,:1024], rgu_images[1][:1024,:1024], rgu_images[2][:1024,:1024])

@@ -346,7 +346,7 @@ def gaussian_fit(**kwargs):
     y = np.array(range(data.shape[1]))
     x, y = np.meshgrid(x, y)
     import scipy.optimize as opt
-    p_opt, p_cov = opt.curve_fit(gaussian_2D, (x,y), data, p0=initial_guess)
+    p_opt, p_cov = opt.curve_fit(gaussian_2D, (x,y), data.ravel(), p0=initial_guess)
 
     return(p_opt, p_cov)
 
