@@ -169,7 +169,7 @@ def wcs_centroid(image, **kwargs):
     """
     # Unpack parameters from keyword arguments.
     proper_coords = kwargs.get("proper_coords")
-    cor_x, cor_y = kwargs.get("correction_factor")
+    cor_x, cor_y = kwargs.get("c_factor")
     # Get the RA and DEC of the central pixel and object from metadata.
     central_ra = image["aref"] + cor_x * image["ascale"]
     central_dec = image["dref"] + cor_y * image["dscale"]
@@ -204,7 +204,7 @@ def hybrid_centroid(image, **kwargs):
         (y_guess, x_guess): tuple, array coordinates of the object centroid.
     """
     wcs_x, wcs_y = wcs_centroid(image, proper_coords=kwargs.get("proper_coords"),
-                                correction_factor=(0,0), floor=False
+                                c_factor=(0,0), floor=False
                                 )
     x_guess, y_guess = get_click_coord(image["data"], marker=(wcs_x,wcs_y))
     # Reverse order to map (y,x) --> (row,col)
@@ -240,7 +240,7 @@ def align(images, **kwargs):
         if centroid_func == manual_centroid:
             x_guess, y_guess = get_click_coord(image["data"])
         if centroid_func == wcs_centroid:
-            y_guess, x_guess = wcs_centroid(image, proper_coords=kwargs.get("proper_coords"), correction_factor=(-24,-1), floor=True)
+            y_guess, x_guess = wcs_centroid(image, proper_coords=kwargs.get("proper_coords"), c_factor=(-24,-1), floor=True)
         if centroid_func == hybrid_centroid:
             x_guess, y_guess = hybrid_centroid(image, proper_coords=kwargs.get("proper_coords"))
 
@@ -317,7 +317,7 @@ def stack(aligned_image_stack, **kwargs):
     return(stacked_image)
 
 def gaussian_2D(coords, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
-    (x, y) = coords
+    x, y = coords
     xo = float(xo)
     yo = float(yo)
     a = (np.cos(theta)**2)/(2*sigma_x**2) + (np.sin(theta)**2)/(2*sigma_y**2)
@@ -336,53 +336,46 @@ def gaussian_fit(**kwargs):
     derived from an initial guess and using scipy.optimize.
 
     Args:
-
+        data (2darray): contains a single gaussian-like source, to be fitted
+        initial_guess (tuple): initial guess at the parameters of the gaussian
     Returns:
-
+        p_opt (1darray): fitted params[amplitude, xo, yo, sigma_x, sigma_y, theta, offset]
+        p_cov (2darray): containing the covariant matrix of the gaussian fit.
     """
     data = kwargs.get("data")
-    initial_guess = kwargs.get("guess")
+    guess = kwargs.get("guess")
+
     x = np.array(range(data.shape[0]))
     y = np.array(range(data.shape[1]))
-    x, y = np.meshgrid(x, y)
-    import scipy.optimize as opt
-    p_opt, p_cov = opt.curve_fit(gaussian_2D, (x,y), data.ravel(), p0=initial_guess)
+    x, y  = np.meshgrid(x, y)
+
+    p_opt, p_cov = optimize.curve_fit(gaussian_2D, (x,y), data.ravel(), p0=guess)
 
     return(p_opt, p_cov)
 
-# def gaussian(height, center_x, center_y, width_x, width_y):
-#     """
-#     Returns a gaussian function with the given parameters.
-#     """
-#     width_x = float(width_x)
-#     width_y = float(width_y)
-#     return lambda x,y: height*np.exp(-(((center_x-x)/width_x)**2+((center_y-y)/width_y)**2)/2)
-#
-# def moments(data):
-#     """
-#     Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D
-#     distribution by calculating its moments.
-#     """
-#     total = data.sum()
-#     X, Y = np.indices(data.shape)
-#     x = (X * data).sum() / total
-#     y = (Y * data).sum() / total
-#     col = data[:,int(y)]
-#     width_x = np.sqrt(np.abs((np.arange(col.size) - y)**2 * col).sum() / col.sum())
-#     row = data[int(x), :]
-#     width_y = np.sqrt(np.abs((np.arange(row.size) - x)**2 * row).sum() / row.sum())
-#     height = data.max()
-#     return height, x, y, width_x, width_y
-#
-# def fitgaussian(data):
-#     """
-#     Returns (height, x, y, width_x, width_y) the gaussian parameters of a 2D
-#     distribution found by a fit.
-#     """
-#     params = moments(data)
-#     errorfunction = lambda p: np.ravel(gaussian(*p)(*np.indices(data.shape)) - data)
-#     p, success = optimize.leastsq(errorfunction, params)
-#     return(p)
+def get_gauss_guess(cutout):
+    """
+    Devise an initial guess for the paramenters of a 2D gaussian based on
+    mathematical properties of the array.
+    """
+    amplitude = np.max(cutout) - np.median(cutout)
+    xo, yo = weighted_mean_2D(cutout)
+    sigma_x, sigma_y = 2.5, 2.5
+    theta = 0
+    offset = np.median(cutout)
+
+    return(amplitude, xo, yo, sigma_x, sigma_y, theta, offset)
+
+def wcs_cutout(image, **kwargs):
+    """
+    Recieves and image dict and returns a smaller cutout array from the image
+    data around a WCS centroid.
+    """
+    size = kwargs.get("size")
+    proper_coords = kwargs.get("proper_coords")
+    c_col, c_row = wcs_centroid(image, proper_coords=proper_coords, c_factor=(0,0), floor=True)
+    cutout = np.array(image["data"][c_row-size:c_row+size, c_col-size:c_col+size])
+    return(cutout)
 
 def radians(coordinates):
     """
