@@ -80,52 +80,40 @@ plt.title("J094511, {}-band".format(band))
 plt.show()
 
 cropped_stack = np.array(stacked_image["data"][553:573,565:585])
-amplitude = np.max(cropped_stack) - np.median(cropped_stack)
-xo, yo = weighted_mean_2D(cropped_stack)
-sigma_x, sigma_y = 2.5, 2.5
-theta = 0
-offset = np.median(cropped_stack)
-# Fit the data using scipy.optimize and get the covariant matrix of the gaussian.
-# initial_guess = (float(2.27384094e+03),float(9.36559309e+00),float(8.80586232e+00),float(2.68011181e+00),float(2.15738873e+00),float(-6.48237659e+0),float(2.63114428e+04))
-# initial_guess = get_gauss_guess(cropped_stack)
-initial_guess = (amplitude, xo, yo, sigma_x, sigma_y, theta, offset)
+initial_guess = get_gauss_guess(cropped_stack)
 params, covariance = gaussian_fit(data=cropped_stack, guess=initial_guess)
 
 # Plot a contour map over the stacked object image.
 x = np.linspace(0, cropped_stack.shape[0], cropped_stack.shape[0])
 y = np.linspace(0, cropped_stack.shape[1], cropped_stack.shape[1])
 x, y  = np.meshgrid(x, y)
-fitted_data = gaussian_2D((x, y), *params)
+fitted_data = gaussian_2D((x, y), *params).reshape(20, 20)
 plt.imshow(cropped_stack, cmap='viridis', origin='lower', norm=LogNorm())
-plt.contour(x, y, fitted_data.reshape(20, 20), 7, colors='r')
+plt.contour(x, y, fitted_data, 7, colors='r')
 plt.title("Gaussian Fit on J094511, {}-band".format(band))
 # plt.savefig("report/img/gauss_fit_wcs_{}_stack.eps".format(band),bbox_inches="tight", pad_inches=0)
 plt.show()
 plt.clf()
-print(initial_guess)
-print(p_opt)
 
-# Now fit a gaussian to the object in each unstacked frame, resample, and stack.
+"""
+Now fit a gaussian to the object in each unstacked frame, resample, and stack.
+"""
 x, y = np.linspace(0, 20, 20), np.linspace(0, 20, 20)
 x, y = np.meshgrid(x, y)
-x_res, y_res = np.linspace(0, 100, 100), np.linspace(0, 100, 100)
+x_res, y_res = np.linspace(0, 20, 100), np.linspace(0, 20, 100)
 x_res, y_res  = np.meshgrid(x_res, y_res)
 stack = np.zeros((100,100))
 
 for image in unaligned_images:
-    cutout = wcs_cutout(image, size=10, proper_coords=degrees(("09:45:11.08","17:45:44.78")))
+    cutout = wcs_cutout(image, size=10, proper_coords=proper_coords)
     initial_guess = get_gauss_guess(cutout)
-
-    print(initial_guess)
-    fitted_data = gaussian_2D((x, y), *initial_guess)
-    plt.imshow(cutout, cmap='viridis', origin='lower', norm=LogNorm())
-    plt.contour(x, y, fitted_data.reshape(20, 20), 7, colors='r')
-    plt.show()
-    print(initial_guess)
-
     params, covariance = gaussian_fit(data=cutout, guess=initial_guess)
+    fitted_data = gaussian_2D((x_res, y_res), *params).reshape(100, 100)
+    plt.imshow(cutout, cmap='viridis', origin='lower', norm=LogNorm())
+    plt.contour(x_res, y_res, fitted_data, 7, colors='r')
+    plt.show()
     # Re-center the gaussian fit on the center of the cutout.
-    c_params = (params[0], 50.0, 50.0, params[3], params[4], params[5], params[6])
+    c_params = (params[0], 10.0, 10.0, params[3], params[4], params[5], params[6])
     stack += gaussian_2D((x_res,y_res), *c_params).reshape(100,100)
 plt.imshow(stack, cmap='viridis', origin='lower', norm=LogNorm())
 plt.show()

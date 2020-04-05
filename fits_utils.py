@@ -343,14 +343,13 @@ def gaussian_fit(**kwargs):
         p_cov (2darray): containing the covariant matrix of the gaussian fit.
     """
     data = kwargs.get("data")
+    guess = kwargs.get("guess")
 
-    initial_guess = kwargs.get("initial_guess")
-
-    x = np.linspace(0, data.shape[0], data.shape[0])
-    y = np.linspace(0, data.shape[1], data.shape[1])
+    x = np.array(range(data.shape[0]))
+    y = np.array(range(data.shape[1]))
     x, y  = np.meshgrid(x, y)
 
-    p_opt, p_cov = optimize.curve_fit(gaussian_2D, (x,y), data.ravel(), p0=initial_guess)
+    p_opt, p_cov = optimize.curve_fit(gaussian_2D, (x,y), data.ravel(), p0=guess)
 
     return(p_opt, p_cov)
 
@@ -361,7 +360,7 @@ def get_gauss_guess(cutout):
     """
     amplitude = np.max(cutout) - np.median(cutout)
     xo, yo = weighted_mean_2D(cutout)
-    sigma_x, sigma_y = 5.0, 5.0
+    sigma_x, sigma_y = 2.5, 2.5
     theta = 0
     offset = np.median(cutout)
 
