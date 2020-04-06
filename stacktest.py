@@ -100,24 +100,74 @@ Now fit a gaussian to the object in each unstacked frame, resample, and stack.
 """
 x, y = np.linspace(0, 20, 20), np.linspace(0, 20, 20)
 x, y = np.meshgrid(x, y)
-x_res, y_res = np.linspace(0, 20, 100), np.linspace(0, 20, 100)
+x_res, y_res = np.linspace(0, 20, 1000), np.linspace(0, 20, 1000)
 x_res, y_res  = np.meshgrid(x_res, y_res)
-stack = np.zeros((100,100))
+stack = np.zeros((1000,1000))
 
 for image in unaligned_images:
     cutout = wcs_cutout(image, size=10, proper_coords=proper_coords)
     initial_guess = get_gauss_guess(cutout)
     params, covariance = gaussian_fit(data=cutout, guess=initial_guess)
-    fitted_data = gaussian_2D((x_res, y_res), *params).reshape(100, 100)
-    plt.imshow(cutout, cmap='viridis', origin='lower', norm=LogNorm())
-    plt.contour(x_res, y_res, fitted_data, 7, colors='r')
-    plt.show()
+    fitted_data = gaussian_2D((x_res, y_res), *params).reshape(1000, 1000)
+    # plt.imshow(cutout, cmap='viridis', origin='lower', norm=LogNorm())
+    # plt.contour(x_res, y_res, fitted_data, 7, colors='r')
+    # plt.show()
     # Re-center the gaussian fit on the center of the cutout.
     c_params = (params[0], 10.0, 10.0, params[3], params[4], params[5], params[6])
-    stack += gaussian_2D((x_res,y_res), *c_params).reshape(100,100)
+    stack += gaussian_2D((x_res,y_res), *c_params).reshape(1000,1000)
+
+# Crude background subtraction.
+stack -= np.min(stack)
+# Fit a final gaussian to the stacked gaussians and plot as a contour map.
+initial_guess = get_gauss_guess(stack)
+params, covariance = gaussian_fit(data=stack, guess=initial_guess)
+fitted_data = gaussian_2D((x_res, y_res), *params).reshape(1000, 1000)
+print("Amp: {}\nx0,y0: {}, {}\nsigma_x: {}\n sigma_y: {}\ntheta: {}\noffset: {}".format(*params))
 plt.imshow(stack, cmap='viridis', origin='lower', norm=LogNorm())
+x_res, y_res = np.linspace(0, 1000, 1000), np.linspace(0, 1000, 1000)
+plt.contour(x_res, y_res, stack, 7, colors='r')
 plt.show()
 plt.clf()
+
+steps = 49
+radii = np.linspace(50.0, 500.0, steps)
+total_counts = np.zeros(steps)
+counts_per_area = np.zeros(steps)
+annulus_area = np.zeros(steps)
+annulus_counts = np.zeros(steps)
+
+for i in range(steps):
+    counts = 0.0
+    for row in range(1000):
+        for col in range(1000):
+            p_radius = np.sqrt((row-500)**2 + (col-500)**2)
+            if p_radius < radii[i]:
+                counts += stack[row,col]
+    total_counts[i] = counts
+    annulus_counts[i] = counts - total_counts[i-1]
+    annulus_area[i] = np.pi*(radii[i]**2 - (radii[i]-50.0)**2)
+    counts_per_area[i] = annulus_counts[i] / annulus_area[i]
+
+plt.plot(radii, total_counts, 'r-')
+plt.title("Counts in Aperture")
+plt.savefig("report/img/J094511_{}_aperture_sum.eps".format(band), bbox_inches="tight", pad_inches=0)
+plt.savefig("report/img/J094511_{}_aperture_sum.png".format(band), bbox_inches="tight", pad_inches=0)
+plt.show()
+plt.plot(radii, annulus_counts, 'g-')
+plt.title("Counts in Annulus")
+plt.savefig("report/img/J094511_{}_annulus_sum.eps".format(band), bbox_inches="tight", pad_inches=0)
+plt.savefig("report/img/J094511_{}_annulus_sum.png".format(band), bbox_inches="tight", pad_inches=0)
+plt.show()
+plt.plot(radii, annulus_area, 'b-')
+plt.title("Area of Annulus")
+plt.savefig("report/img/J094511_{}_annulus_area.eps".format(band), bbox_inches="tight", pad_inches=0)
+plt.savefig("report/img/J094511_{}_annulus_area.png".format(band), bbox_inches="tight", pad_inches=0)
+plt.show()
+plt.plot(radii, counts_per_area, 'r-')
+plt.title("Flux in Annulus (J094511 Profile)")
+plt.savefig("report/img/J094511_{}_annulus_flux.eps".format(band), bbox_inches="tight", pad_inches=0)
+plt.savefig("report/img/J094511_{}_annulus_flux.png".format(band), bbox_inches="tight", pad_inches=0)
+plt.show()
 # plot(rgu_images[0], rgu_images[1], rgu_images[2], 'viridis')
 # rgb(rgu_images[0][:1024,:1024], rgu_images[1][:1024,:1024], rgu_images[2][:1024,:1024])
 # hist(seeing_pixels, seeing_arcsec)
