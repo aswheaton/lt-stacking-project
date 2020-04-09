@@ -14,7 +14,7 @@
 \rhead{\thedate}
 \cfoot{Page \thepage}
 
-\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+% \renewcommand{\thefootnote}{\fnsymbol{footnote}}
 
 % Title and author for title page. %
 
@@ -55,41 +55,9 @@
 \newcommand\KKK{\kern.2em} % Large amount of kerning.
 \newcommand\KKKK{\kern.3em} % Very large amount of kerning.
 
-% Python code-highlighting syntax. %
-
-\usepackage{listings}
-\usepackage{color}
-\definecolor{codegreen}{rgb}{0,0.6,0}
-\definecolor{codegray}{rgb}{0.5,0.5,0.5}
-\definecolor{codepurple}{rgb}{0.58,0,0.82}
-\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
-\definecolor{deepblue}{rgb}{0,0,0.5}
-\definecolor{deepred}{rgb}{0.6,0,0}
-\definecolor{deepgreen}{rgb}{0,0.5,0}
-\lstdefinestyle{python}{
-    backgroundcolor=\color{backcolour},
-    commentstyle=\color{codegreen},
-    keywordstyle=\color{deepblue},
-    numberstyle=\tiny\color{codegray},
-    stringstyle=\color{codegreen},
-    basicstyle=\footnotesize,
-    breakatwhitespace=false,
-    breaklines=true,
-    captionpos=b,
-    keepspaces=true,
-    numbers=left,
-    numbersep=5pt,
-    showspaces=false,
-    showstringspaces=false,
-    showtabs=false,
-    tabsize=2
-}
-
-\lstset{style=python}
-
 % Bibliography and referencing style.
 
-\usepackage[backend=bibtex,style=phys,sorting=ynt]{biblatex} % Use style=draft for troubleshooting.
+\usepackage[backend=bibtex,style=phys,sorting=nyt]{biblatex} % Use style=draft for troubleshooting.
 \addbibresource{references.bib}
 
 % Page formatting.
@@ -123,15 +91,16 @@
 
 \begin{abstract}
     In this project, I examine the unusual luminosity of the galactic nucleus
-    SDSS J094511 located at redshift $Z=?$ using data gathered with the
+    SDSS J094511 located at redshift $z=0.758$ using data gathered with the
     Liverpool Telescope on Las Palmas between 2012 and 2018. I develop several
     algorithms for centroiding on the object, for resampling to obtain higher
     resolution, and for stacking images to increase the S/N ratio in the frame.
     I extract radial and linear cross sections from the object and compare these
     to the point-spread-function of the Liverpool Telescope CCD to corroborate
-    the hypothesis that linear increases in the luminosity are \textit{not} due
-    to instability of the viscous AGN accretion disk, but a gravitational
-    microlensing event by a star in an intervening galaxy or dwarf galaxy.
+    the hypothesis that linear increases in the luminosity over large timescales
+    are \textit{not} due to instability of the viscous AGN accretion disk, but a
+    gravitational microlensing event by a star in an intervening galaxy or dwarf
+    galaxy.
 \end{abstract}
 
 \vspace*{1cm}
@@ -152,106 +121,239 @@
 \setcounter{page}{1} % Set page number to 1
 \tableofcontents
 \newpage
-\section{Introduction}
-\subsection{AGNs and the Viscous Accretion Disc}
-\cite{lawrence_2018}
-\subsection{The Pan-STARRS Survey}
-\cite{bruce_2017}
 
-\section{The Liverpool Telescope Data}
+\section{Introduction}
+
+The luminosity of most galaxies is dominated by stellar emission and emission
+from hot gas and dust in the interstellar medium, which is heated by those
+stars. As such, it is mostly confined to the wavelength range of typical
+stars---the ultraviolet through the infrared. Between 1 and 50\% of galaxies in
+the local universe, however, show strong emission in a wider range of bands,
+from gamma rays to the radio spectrum. The source of these emissions is
+typically confined to a compact nuclear region, and such objects are therefore
+called active galactic nuclei (AGN).\cite{mcclure_2019}
+
+AGN are distinguished from one another by their luminosities, spectra, and
+ratio of nuclear to galactic luminosity into four main groups: Seyfert galaxies,
+quasars, radio galaxies, and optically-violent variables. The aforementioned
+properties vary among these broad catagories, but most AGN exhibit (among other
+common characteristics):
+
+\begin{itemize}
+    \item luminous and compact appearance
+    \item broad spectral energy distribution which is not explicable by thermal
+    (blackbody) emission
+    \item variability over short timescales of minutes to days
+\end{itemize}
+
+\noindent which are relevant to this project.\cite{mcclure_2019}
+
+\subsection{The Viscous Accretion Disc}
+
+The underlying mechanism for this luminosity is widely understood to be the accretion of matter onto a supermassive black hole.\cite{mcclure_2019} The luminosity, compactness and sprectra of AGN are well described by a model in which matter that falls into a black hole with some amount of angular momentum and forms an accretion disk. Gravitational potential energy is changed for kinetic energy (and therefore angular momentum), and viscous processes between particles on different orbits create drag, transferring angular moment outward and heating the disk. This energy is then radiated thermally.\cite{lawrence_2018}
+
+\noindent Small adjustments to this model for surrounding clouds and ``atmosphere'' closely fit observed spectral energy distributions.\cite{lawrence_2018}. What this model fails to explain, however, is the extreme variability of AGN. A viscosity parameter which explains observed luminosities should also result in a very stable disk, for which changes in the optical spectrum take place only on the order of $10^3$ years.\cite{lawrence_2018}
+
+The accretion disk model was briefly rescued by the idea of X-ray reprocessing \textbf{Citation Needed}, but recent observations of ``hypervariable,'' high-luminisity AGN by the Sloan Digital Sky Survey (SDSS), the Panoramic Survey Telescope and Rapid Response System (Pan-STARRS) have once again cast uncertainty onto the model. These objects vary on timescales comparable to the time for information to propagate over the Scharzchild radius of a supermassive black hole\cite{mcclure_2019}\cite{lawrence_2018}:
+
+\begin{equation}
+    \Delta t \geq \frac{R_{Sch}}{c} = \frac{2GM}{c^3}
+\end{equation}
+
+\noindent That such extreme changes should happen on these timescales and in the optical spectrum suggests that the disk undergoes incredible physical change and that this change propagates relativistically through the disk---a strong argument for instability.
+
+\subsection{The Pan-STARRS Survey}
+
+In 2016 Lawrence et. al identified fifteen transiently luminous, blue AGN in the Pan-STARRS1 Survey by comparison with earlier data from the SDSS. These targets were subsequently monitored with the Liverpool Telescope (LT) on Las Palmas, and found to be hypervariable AGN over a timescale of decades.\cite{lawrence_2016}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.67\textwidth]{J094511_magnitudes.eps}
+    \caption{Magnitude of SDSS J094511 from SDSS, CRTS, PanSTARRS, and LT observations, over ten years.}
+    \label{fig:magplot}
+\end{figure}
+
+One such transiently luminous, blue hypervariable AGN is SDSS J094511, a \textbf{insert quasar classification here} in the constellation Leo and at redshift $z=0.758$.\cite{lawrence_2016}\cite{bruce_2017} Fig. \ref{fig:magplot} shows the evolution of magnitide of J094511 in the Sloan $g'$ band between 2004 and 2014, using combined data from the SDSS, from the Catalina Real-Time Transit Survey (CRTS), from Pan-STARRS1, and the LT. The oject evolves at $\sim 0.4 $ mag/yr from $g' \sim 22.2$ to $19.7$ and back again, during which time its luminosity changes by a factor of $\sim 2$.\cite{bruce_2017}. This magnitude of evolution over a period of ten years is not explicable by the accretion disk model alone.
+
+Lawrence et. al therefore propose several possible explanations for these events, with the most likely candidates being i) changes in the accretion state of the disk (i.e. matter falling into an otherwise quiet AGN) and ii) large amplitude microlensing events by stars in intervening galaxies or dwarf galaxies.\cite{lawrence_2016} Microlensing is a well established explanation for AGN variability, and can take the form of either macro-lensing due to the gravitational of the entire intervening galaxy or microlensing by a single or few constituent stars. The latter event is more likely to be the case for small galaxies, for which the macroscopic gravitational potential does not dominate the lensing effect.\cite{lawrence_2016}
+
+\textbf{Possibly more information from Lawrence et. al p.16 here}
+
+ There are several signatures which may indicate that this is the case for a particular object. If the AGN is modeled as point source and intervening star modeled as a lens (henceforth: simple microlensing model), it is possible to compute the lightcurve $F(t) = \mu(t)F_s$ which describes the evolution of the lensed AGN with respect to its unlensed flux, as described by Bruce et. al (2017). This model contains seven free parameters, one of which is a flux contribution $F_b$ from the host galaxy of the lensing star(s). Although a simplification, this model is particularly useful for understanding hypervariables like J094511, whose light curves evolve smoothly.\cite{bruce_2017}
+
+ The parameter $F_b$ is key to demonstrating a lensing event, as background flux may be detectable in the cross sectional luminosity curve of the object. In this project, I develop methods for quantifying this parameter by stacking frames from the Liverpool Telescope to improve signal to noise ratio and depth of field, and for extracting the luminosity profile of objects in the frame for comparison to the point spread function of the Liverpool Telescope.
+
+\section{Liverpool Telescope Data}
+
+There are several technical problems associated with the LT data. In many frames, astronomical seeing is very poor. All frames, particularly in the U-band, are littered with hot pixels or cosmic rays detections. Each of these factors obfuscates the already faint luminosity profile of J094511, and I have employed several statistical methods to mitigate them.
+
+\subsection{Stacking to Increase S/N Ratio}
+
+For astronomical frames in which the noise is background limited (i.e. thermal, source, and read noise are negligible compared to the sky) the signal to noise ratio goes as\cite{lawrence_2014}\cite{mcclure_2019}:
+
+\begin{equation}
+    \frac{S}{N} = \frac{n_\star t}{\sqrt{n_{pix}n_st}} \propto t^{\sfrac{1}{2}}
+\end{equation}
+
+Where $t$ is the exposure time of the frame. S/N ratio increases with exposure time, although with diminishing marginal returns. Very long exposures, however, are typically limited by the saturation saturation point of the CCD. A typical approach to increasing the S/N ratio of observations, then, is to ``stack'' the frames of many short exposures, summing up the counts recieved at each point in the sky in each frame.\cite{mcclure_2019} As the S/N ratio increases, faint objects in the frame like J094511 become more distinguishable from the background (increased depth of field), and cosmic ray detections disappear into the background, both without saturating the CCD.
+
+\subsection{Astronomical Seeing}\label{sec:astronomical_seeing}
+
+Atmospheric turbulence creates a differential density of air above ground-based telescopes, distorting light wavefronts and obfuscating astronomical objects with ``speckles.'' This phenomena is called atmospheric seeing, and is typically quantified by $\theta_s$, the hypothetical full width at half maximum of an ``airy disc'' which distorts incoming wavefronts.
 
 \begin{figure}[h!]
     \includegraphics[width=0.32\textwidth]{seeing_hist_U_band.eps}
     \includegraphics[width=0.32\textwidth]{seeing_hist_G_band.eps}
     \includegraphics[width=0.32\textwidth]{seeing_hist_R_band.eps}
-    \caption{Astronomical seeing of the LT data in Johnson UGR bands.}
+    \caption{Astronomical seeing of the LT data in Sloan \textit{u'g'r'} bands.}
     \label{fig:seeing}
 \end{figure}
 
-There are several technical problems associated with the Liverpool Telescope
-(LT) data. In many frames, astronomical seeing is very poor. All frames,
-particularly in the U-band, are littered with hot pixels or cosmic rays
-detections.
+Astronomical seeing values of $\theta_s=1''$ are typical for optical wavelengths, where the Sloan bands lie. Values below this are considered exceptionally good seeing.\cite{mcclure_2019}\cite{lawrence_2014} It is desirable to discard frames with higher seeing values, but this must be balanced against the need for additional frames to increase the S/N ratio in the final stack. Fig. \ref{fig:seeing} shows the distribution of seeing values, in arcseconds, in each of the Sloan \textit{u'g'r'} bands, with the mean (blue) and standard deviations (red) plotted vertically. It is clear that discarding frames with $\theta_s>1''$ would result in substantially reduced dataset, and a resultingly low S/N ratio for an already faint object. For this reason, I have elected to discard all frames for which $\theta_s>\bar{\theta_s}+\sigma_\theta$, where the seeing parameter is more than one standard deviation above the mean parameter. This includes the most of the available data in each band, while exluding the worst seeing parameters and is a more rigorous and reproducible approach to ensuring the best possible stack.
 
-A single image of J094511 in the U-band has a seeing of $r_0=999.0''$, which is
-likely an error. For this reason, the image has been thrown out and its seeing
-parameter excluded from the calculation of the mean and standard deviation of
-the seeing data.
+A single image of J094511 in the U-band has a seeing of $r_0=999.0''$, which is likely an error or the result of exceptional atmospheric turbulence. Including this value in the statistics derived from the seeing distribution would badly skew $\bar{\theta_s}$ and $\sigma_\theta$ For this reason, the image has been discarded and its seeing parameter excluded from the calculation of the mean and standard deviation of the seeing distribution.
 
-\subsection{S/N Ratio and Astronomical Seeing}
+\subsection{FITS World Coordinate Data}
+
+Finally, individual frames in the dataset are not all centered on the same equatorial coordinates, and must therefore be aligned before they can be stacked. Individual frames are stored using the NASA FITS standard, which contains a series of header data units (HDUs), each of which contain a data cube and metadata associated with that cube.\cite{FITS_standard} The LT HDUs contain a single, 2-dimensional arrays of counts per pixel for each frame. The metadata of each HDU contains the astronomical seeing, roation, and crucially, the World Coordinate System (WCS) associated with each frame.\cite{greisen_2002} The WCS data contains several key pieces of information for aligning individual frames.
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ | l | c | l |} \hline
+        Header Key & Value & Meaning \\ \hline \hline
+        CTYPE1  & 'RA---TAN'     & WCS projection \\
+        CTYPE2  & 'DEC--TAN'     & WCS projection \\
+        CRPIX1  &  512.          & WCS reference pixel coordinate \\
+        CRPIX2  &  512.          & WCS reference pixel coordinate \\
+        CRVAL1  &  146.295274426 & [degrees] World coordinate at the ref pix \\
+        CRVAL2  &  17.76338016   & [degrees] World coordinate at the ref pix \\
+        CDELT1  & -7.7508973E-05 & [degrees/pixel] \\
+        CDELT2  & 7.7508973E-05  & [degrees/pixel] \\
+        CROTA1  & 90.361783      & [degrees] \\
+        CROTA2  & 90.361783      & [degrees] \\ \hline
+    \end{tabular}
+    \caption{\label{tab:FITS_header}Example FITS header keys and values from the LT.}
+\end{table}
+
+While the WCS projection and platescale (CDELT1/CDELT2) are constant across all frames, other WCS values---most importantly the world coordinate at the reference pixel---vary from frame to frame. Random frames are rotated by multiples of $\sfrac{\pi}{4}$ from the $(x,y) \rightarrow (-\alpha, \delta)$ mapping. Additionally, frames taken after 20?? have a twice the field of view of previous frames, with a reference pixel of (1024,1024), rather than (512,512). There are also systematic errors in $(\alpha, \delta)$ coordinate of the reference pixel (see Sec. \ref{sec:wcs_centroid}).
+
+\section{The \textsc{AstroPy} and \textsc{FITS-Utils} Modules}
+
+To correct for these factors, I utilised the \textsc{AstroPy} module for \textsc{Python 3.5.2}. The \textsc{AstroPy} module allows one to load in FITS compliant files as HDU objects which contain all the data and metadata associated with a particle file. Performing math on the data stored in these objects, however, can modify the original FITS file\cite{astropy_2013}\cite{astropy_2018}, so I modified and extended the functionality of the \textsc{fits-utils} module, written for aligning and stacking on the Telescope Group Project course at the University of Edinburgh.\footnote{\url{github.com/aswheaton/fits-utils}} HDU data cubes are loaded into \textsc{NumPy} arrays and stored in an ``image-dictionary.'' Relevant metadata for each image are also stored in this dictionary, which behaves similarly to the \textsc{AstroPy} HDU object.
+
+I then algorithmically sort frames by seeing value according to the standards defined in Sec. \ref{sec:astronomical_seeing}, rotate each array if necessary so that $(x,y) \rightarrow (-\alpha, \delta)$, crop the array if necessary to 1024x1024 pixels, and reassign the coordinates of reference pixel to (512,512) if the array is cropped. The image-dictionaries are then ready to be aligned and stacked.
+
 \section{Centroiding on J094511}
-\subsection{Initial Guess: Max-Value Centroiding}
-\subsection{Initial Guess: WCS Centroiding}
 
-\begin{figure}[H]
+In order to align each image, its offset, in pixels, with respect to every other image in the stack must be determined.The location of J094511 varies around the reference pixel in each frame, and the relative offset of each image can be computed by comparing the location of the object in each.\footnote{Note that from here on, the phrases ``pixel coordinates'' or ``image coordinates'' will be used to refer to the $(x,y)$ coordinates of pixels in the image, which are mapped to $(-\alpha,\delta)$ as defined by the FITS file standard\cite{FITS_standard}. The phrase ``array coordinates'' will be used to refer to the $(row,column)$ indices of the \textsc{NumPy} array containing the image. This is an important distinction, as pixel coordinates are mapped to array coordinates by $(x,y) \rightarrow (column, row)$.}
+
+Determining the precise location of the object, however, is a non-trivial task. J094511 has a spread of $\sim10$ pixels in each frame. A naive approach to determining its centerpoint would be to take the pixel coordinates of the maximum value of the object, but doing this algorithmically quickly proves futile and innaccurate. J094511 is by far one of the faintest objects in the frame, and there is no obvious way to distinguish pixels which contain the object from pixels which do not. Even a hard coded cutout from the array, which was manually verified to always contain the object, frequently contains sufficient noise and cosmic ray detections to confuse any maximum value finding algorithm. Even if this were possible, poor atmospheric seeing distorts the object so that the brightest pixel is commonly \textit{not} at the center of the object (dubiously assuming that the ``above atmosphere'' brightest pixel is even at the center, or the same across frames).
+
+\subsection{Two Dimensional Weighted Mean}\label{sec:flux_weighted_mean}
+
+A better method for computing the centroid of the object is to calculate the flux weighted mean in two dimensions:
+
+\begin{equation}
+        (\bar{x},\bar{y}) =
+        \left( \frac{1}{n_{tot}} \sum_{i}^{} n(x_i) x_i,
+        \frac{1}{m_{tot}} \sum_{j}^{} m(y_j) y_j \right)
+\end{equation}
+
+\noindent Whereby all the counts are first summed along the $y$-axis and the flux weighted mean of position, $\bar{x}$, calculated, and then the inverse---summing along the $x$-axis and calculating $\bar{y}$---is performed. This is a more reliable method of calculating the object centroid, which tends to downweight individual speckles from atmospheric seeing and cosmic ray detections. Unfortunately, performing a 2D weighted mean on the entire frame invariably yields the reference (center) pixel coordinates for $(\bar{x},\bar{y})$. No source in the LT frames is sufficiently bright to reliably pull this average away from the center pixels, even when rescaled exponentially. Least of all is J094511 able to do this.
+
+The weighted average calculation, it turns out, is only sensitive to objects which nearly fill the sample region. There is enough variation in the location of J094511 between frames that a hard coded cutout from the array which will always contain the object is large enough to suffer the same problem. A smaller cutout region is need. Thus, a technique for accurately and algorithmically making an initial guess at the location of the object, around which a small cutout region can be made dynamically, was developed using the WCS data from the LT FITS headers.
+
+\subsection{Initial Guess: WCS Centroiding}\label{sec:wcs_centroid}
+
+By comparing the known coordinates of J094511, ($\alpha$,$ \delta$) = (9:45:11.08,+17:45:44.78) to the world coordinates at the reference pixel, we can compute an initial guess for the location of J094511. Some trivial linear algebra gives that:
+
+\begin{align}
+    x_\star = p_\alpha(\alpha_\star - \alpha_{ref}) + x_{ref} \\
+    y_\star = p_\delta(\delta_\star - \delta_{ref}) + y_{ref}
+    \label{eq:wcs_linalg}
+\end{align}
+
+\noindent Where $(x,y)$ are pixel coordinates, $(\alpha,\delta)$ are equatorial coordinates in degrees, $\star$ denotes values associated with the object of interest and $ref$ denotes values associated with the reference pixel. The values $p_\alpha$ and $p_\delta$ are the platescale values from the FITS header, corresponding respectively to keys CDELT1 and CDELT2 in Table \ref{tab:FITS_header}.
+
+In developing this method, however, I found that the LT WCS data is consistently off by $\sim25$ pixels along the $x$/$\alpha$-axis, or about $1''$. This is easily corrected by an extra term in Eq. \ref{eq:wcs_linalg}, so I wrote the WCS centroiding function to accommodate a user specified correction factor.
+
+Once corrected, the pixel coordinatess of the intitial guess are rounded to the nearest whole pixel, mapped back to array coordinates and a cutout of 10x10 pixels taken around them. I perform the weighted mean calculation for this smaller array, round the result to the nearest whole pixel value, and map this centroid back to the array coordinates of the entire image.
+
+This process produces reasonably good centroid values in almost every frame, but has some disadvantages. First, there are two points in the process where a non-integer pixel coordinate are necessarily rounded: once when calculated the offset from the reference pixel, and again after performing the weighted mean. Each of these introduce an error into the centroid calculation. For larger objects, this might be negligible, but for objects such as J094511 which are scarcely 10 pixels across on the LT CCD, each error of $\pm0.5$ pixels is considerable. Second, this approach still limits resolution to the number of pixels in the objects' footprint on the CCD, while the true centroid is, of course, not guaranteed to be at an integer pixel value in any frame.
+
+Once these centroid values are obtained, I carry out the alignment of each frame and stack them accordingly. This process is elaborate, and will only be described in summary here.\footnote{Full implementation of the algorithm at \url{github.com/aswheaton/lt-stacking-project}.} First, the maximum displacements in array coordinates $\Delta r_{max}$ and $\Delta c_{max}$ are calculated from all the centroid values in the stack. These values are used to create an array of zeros, with dimensions $(1024+\Delta r_{max})$x$(1024+\Delta c_{max})$, which are sufficient to hold all the images, once aligned. For each image, then, the displacement in array coordinates with respect to the \textit{minimum} centroid values in the stack, $r_{min}$ and $c_{min}$, and these values, $\Delta r$ and $\Delta c$ are used to cast the unaligned image into its aligned position in the array of zeros. This is done such that:
+
+\begin{equation}
+    (r_{align}, c_{align}) = (r_{unalign} + \Delta r, c_{unalign} + \Delta c)
+\end{equation}
+
+\noindent For each pixel in the array. The resulting stack of aligned images is summed and the resulting array saved to a new image dictionary. This produces a much better defined object, as shown in Fig. \ref{fig:wcs_centroids}. By fitting a two dimensional gaussian to this data, I begin to quantify the properties of J094511 and the sky background on which it lies. Table \ref{tab:wcs_gaussians} shows the fitted parameters for the resulting stack in each of the Sloan $u'g'r'$ bands.
+
+\begin{figure}[t]
     \includegraphics[width=0.32\textwidth]{wcs_centroid_U_stack.eps}
     \includegraphics[width=0.32\textwidth]{wcs_centroid_G_stack.eps}
     \includegraphics[width=0.32\textwidth]{wcs_centroid_R_stack.eps}
-    \caption{Image stack of J094511 in the Johnson UGR bands.}
+    \caption{Image stack of J094511 in the Sloan $u'g'r'$ bands.}
     \label{fig:wcs_centroids}
 \end{figure}
 
-% \cite{lang_2010}
-% \cite{greisen_2002}
-% \cite{calabretta_2002}
-\subsection{Refinement: Two Dimensional Weighted Mean}
-\subsection{Refinement: Gaussian Fitted Centroiding}
-
-\begin{figure}[H]
+\begin{figure}[t]
     \includegraphics[width=0.32\textwidth]{gauss_fit_wcs_U_stack.eps}
     \includegraphics[width=0.32\textwidth]{gauss_fit_wcs_G_stack.eps}
     \includegraphics[width=0.32\textwidth]{gauss_fit_wcs_R_stack.eps}
-    \caption{Gaussian fit on J094511 in the Johnson UGR bands.}
+    \caption{Gaussian fit on J094511 in the Sloan $u'g'r'$ bands.}
     \label{fig:gauss_fit_wcs_stack}
 \end{figure}
 
-In two dimensions, the power to which $e$ is raised in the Gaussian function is
-any negative-definite quadratic form.  Consequently, the level sets of the
-Gaussian will always be ellipses. A particular example of a two-dimensional
-Gaussian function is:
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{| c | l | l | l | l | l | l |} \hline
+        Band & Amplitude & $x_0$ & $y_0$ & $\sigma_x$ & $\sigma_y$ & $\theta$ \\ \hline \hline
+        $u'$ &  &  &  &  &  &  \\
+        $g'$ &  &  &  &  &  &  \\
+        $r'$ &  &  &  &  &  &  \\ \hline
+    \end{tabular}
+    \caption{}
+    \label{tab:wcs_gaussians}
+\end{table}
+
+Discuss fitted parameters and errors here!
+
+\subsection{Refinement: Gaussian Fitted Centroiding}
+
+Gaussian fitting, however, presents a solution to some of the shortcomings of the flux weighted mean centroid described in Sec. \ref{sec:flux_weighted_mean}. Once a gaussian function is fitted to the existing data, the fitted parameters can be used to interpolate the number of counts at non-integer pixel values. This is called resampling, and can be used to obtain higher resolution ``images'' of the object.
+
+Gaussian fitting is also another way to determine the centroid $(x,y)$ of each unaligned image. In two dimensions, the power to which $e$ is raised in the Gaussian function is any negative-definite quadratic form. Consequently, the level sets of the gaussian will always be ellipses.\cite{astropy_gaussian} A particular example of a two-dimensional gaussian function is:
 
 \begin{equation}
     f(x,y) = A \exp\left(- \left(\frac{(x-x_0)^2}{2\sigma_x^2} + \frac{(y-y_0)^2}{2\sigma_y^2} \right)\right)
 \end{equation}
 
-\noindent Here, the coefficient $A$ is the amplitude, $(x_0, y_0)$ is the center and
-$\sigma_x$, $\sigma_y$ are the $x$ and $y$ spreads of the blob. In general, a
-two-dimensional elliptical Gaussian function is expressed as:
+\noindent Where $A$ is the amplitude, $(x_0, y_0)$ are the center in pixel coordinates, $\sigma_x$, $\sigma_y$ are the spread of gaussian in the $x$ and $y$ directions.\cite{wolfram_gaussian} Generally, a two-dimensional elliptical Gaussian function is expressed as:
 
 \begin{equation}
     f(x,y) = A \exp\left(- \left(a(x - x_0)^2 + 2b(x-x_0)(y-y_0) + c(y-y_0)^2 \right)\right)
 \end{equation}
 
-\noindent Where the matrix:
-
-\begin{equation}
-    \begin{bmatrix} a & b \\ b & c \end{bmatrix}
-\end{equation}
-
-\noindent Is positive-definite. For the general form of the equation the
-coefficient $A$ is the height of the peak and $(x_0, y_0)$ is the center of the
-blob. If we set:
+\noindent The coefficients:
 
 \begin{align}
 a & = \frac{\cos^2\theta}{2\sigma_x^2} + \frac{\sin^2\theta}{2\sigma_y^2} \\
-b & = -\frac{\sin2\theta}{4\sigma_x^2} + \frac{\sin2\theta}{4\sigma_y^2} \\
+b & = \frac{\sin2\theta}{4\sigma_x^2} - \frac{\sin2\theta}{4\sigma_y^2} \\
 c & = \frac{\sin^2\theta}{2\sigma_x^2} + \frac{\cos^2\theta}{2\sigma_y^2}
 \end{align}
 
-then we rotate the blob by a clockwise angle $\theta$ (for counterclockwise
-rotation invert the signs in the $b$ coefficient). %<ref>{{cite web |last1=Nawri |first1=Nikolai |title=Berechnung von Kovarianzellipsen |url=http://imkbemu.physik.uni-karlsruhe.de/~eisatlas/covariance_ellipses.pdf |accessdate=14 August 2019}}</ref>
+Allow one to specify a counterclockwise angle $\theta$.\cite{astropy_gaussian}
 
-\subsection{Aperture Centroiding}
-\subsection{Challenges in the U-band}
 \section{Cross Sections of J094511}
 \subsection{Linear and Radial Cross Sections}
 \subsection{Excess Luminosity in the Wings}
 \subsection{Point Spread Function Subtraction}
-\section{Analysis}
+\subsection{Spectrum of J094511}
+Compare the magnitude in each band to typical AGN spectra (see AGN Zoo notes)
 \section{Conclusion}
 
-
-
+\printbibliography
 
 \section*{Appendix A: Alignment Algorithm}
 
