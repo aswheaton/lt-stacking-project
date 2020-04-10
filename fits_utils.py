@@ -240,7 +240,7 @@ def align(images, **kwargs):
         if centroid_func == manual_centroid:
             x_guess, y_guess = get_click_coord(image["data"])
         if centroid_func == wcs_centroid:
-            y_guess, x_guess = wcs_centroid(image, proper_coords=kwargs.get("proper_coords"), c_factor=(-24,-1), floor=True)
+            y_guess, x_guess = wcs_centroid(image, proper_coords=kwargs.get("proper_coords"), c_factor=(-24,0), floor=True)
         if centroid_func == hybrid_centroid:
             x_guess, y_guess = hybrid_centroid(image, proper_coords=kwargs.get("proper_coords"))
 
@@ -321,7 +321,7 @@ def gaussian_2D(coords, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
     xo = float(xo)
     yo = float(yo)
     a = (np.cos(theta)**2)/(2*sigma_x**2) + (np.sin(theta)**2)/(2*sigma_y**2)
-    b = -(np.sin(2*theta))/(4*sigma_x**2) + (np.sin(2*theta))/(4*sigma_y**2)
+    b = (np.sin(2*theta))/(4*sigma_x**2) - (np.sin(2*theta))/(4*sigma_y**2)
     c = (np.sin(theta)**2)/(2*sigma_x**2) + (np.cos(theta)**2)/(2*sigma_y**2)
     g = offset + amplitude*np.exp(-(a*((x-xo)**2)
                                     + 2*b*(x-xo)*(y-yo)
@@ -349,7 +349,7 @@ def gaussian_fit(**kwargs):
     y = np.array(range(data.shape[1]))
     x, y  = np.meshgrid(x, y)
 
-    p_opt, p_cov = optimize.curve_fit(gaussian_2D, (x,y), data.ravel(), p0=guess)
+    p_opt, p_cov = optimize.curve_fit(gaussian_2D, (x,y), data.ravel(), p0=guess, maxfev=5000)
 
     return(p_opt, p_cov)
 
@@ -363,7 +363,6 @@ def get_gauss_guess(cutout):
     sigma_x, sigma_y = 2.5, 2.5
     theta = 0
     offset = np.median(cutout)
-
     return(amplitude, xo, yo, sigma_x, sigma_y, theta, offset)
 
 def wcs_cutout(image, **kwargs):
@@ -398,6 +397,25 @@ def degrees(coordinates):
     ra = 360 * (float(ra_str[0]) / 24 + float(ra_str[1]) / 1440 + float(ra_str[2]) / 86400)
     dec = float(dec_str[0]) + (float(dec_str[1]) / 60) + (float(dec_str[2]) / 3600)
     return((ra, dec))
+
+def print_params_and_errs(params, pcov, ascale, dscale):
+
+    amp, xo, yo, sigma_x, sigma_y, theta, offset = params
+    amp_err, xo_err, yo_err, sigma_x_err, sigma_y_err, theta_err, offset_err = np.sqrt(np.diag(pcov))
+    arcsec_per_deg = 3600
+    # xo *= arcsec_per_deg * ascale
+    # xo_err *= arcsec_per_deg * ascale
+    sigma_x *= 20 / 1000 * arcsec_per_deg * ascale
+    sigma_x_err *= 20 / 1000 * arcsec_per_deg * ascale
+    # yo *= arcsec_per_deg * dscale
+    # yo_err *= arcsec_per_deg * dscale
+    sigma_y *= 20 / 1000 * arcsec_per_deg * dscale
+    sigma_y_err *= 20 / 1000 * arcsec_per_deg * dscale
+
+    theta = theta - (2*np.pi*np.floor(theta/2/np.pi))
+    print("amp, xo, yo, sigma_x, sigma_y, theta, offset")
+    print(amp, xo, yo, sigma_x, sigma_y, theta, offset)
+    print(amp_err, xo_err, yo_err, sigma_x_err, sigma_y_err, theta_err, offset_err)
 
 def annuli_mask(array, center, radii):
     """
