@@ -47,22 +47,22 @@ for image in unaligned_images:
         seeing_filtered_images.append(image)
 unaligned_images = seeing_filtered_images
 
-# print("Max: {}".format(max(seeing_vals)))
-# print("Mean: {}".format(np.mean(seeing_vals)))
-# print("StDev: {}".format(np.std(seeing_vals)))
-# bins=[0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75]
-# plt.hist(seeing_vals, bins=bins)
-# plt.axvline(np.mean(seeing_vals)-np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
-# plt.axvline(np.mean(seeing_vals), color='b', linestyle='dashed', linewidth=1)
-# plt.axvline(np.mean(seeing_vals)+np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
-# plt.axvline(np.mean(seeing_vals)+2*np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
-# plt.axvline(np.mean(seeing_vals)+3*np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
-# plt.title("Astronomical Seeing in {}-band".format(band))
-# plt.xlim([min(bins),max(bins)])
-# plt.xticks(bins)
-# plt.savefig("report/img/seeing_hist_{}_band.eps".format(band),bbox_inches="tight", pad_inches=0)
-# plt.show()
-# plt.clf()
+print("Max: {}".format(max(seeing_vals)))
+print("Mean: {}".format(np.mean(seeing_vals)))
+print("StDev: {}".format(np.std(seeing_vals)))
+bins=[0.75,1.0,1.25,1.5,1.75,2.0,2.25,2.5,2.75]
+plt.hist(seeing_vals, bins=bins)
+plt.axvline(np.mean(seeing_vals)-np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
+plt.axvline(np.mean(seeing_vals), color='b', linestyle='dashed', linewidth=1)
+plt.axvline(np.mean(seeing_vals)+np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
+plt.axvline(np.mean(seeing_vals)+2*np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
+plt.axvline(np.mean(seeing_vals)+3*np.std(seeing_vals), color='r', linestyle='dashed', linewidth=1)
+plt.title("Astronomical Seeing in {}-band".format(band))
+plt.xlim([min(bins),max(bins)])
+plt.xticks(bins)
+plt.savefig("report/img/seeing_hist_{}_band.eps".format(band),bbox_inches="tight", pad_inches=0)
+plt.show()
+plt.clf()
 
 # center, bb_low, bb_high = 512, 350, 650
 # for image in unaligned_images:
@@ -77,7 +77,7 @@ aligned_images = align(unaligned_images, centroid=wcs_centroid, proper_coords=pr
 stacked_image = stack(aligned_images, correct_exposure=False)
 plt.imshow(stacked_image["data"][553:573,565:585], cmap='viridis', origin='lower', norm=LogNorm())
 plt.title("J094511, {}-band".format(band))
-# plt.savefig("report/img/wcs_centroid_{}_stack.eps".format(band),bbox_inches="tight", pad_inches=0)
+plt.savefig("report/img/wcs_centroid_{}_stack.eps".format(band),bbox_inches="tight", pad_inches=0)
 plt.show()
 
 cropped_stack = np.array(stacked_image["data"][553:573,565:585])
@@ -93,7 +93,7 @@ fitted_data = gaussian_2D((x, y), *params).reshape(20, 20)
 plt.imshow(cropped_stack, cmap='viridis', origin='lower', norm=LogNorm())
 plt.contour(x, y, fitted_data, 7, colors='r')
 plt.title("Gaussian Fit on J094511, {}-band".format(band))
-# plt.savefig("report/img/gauss_fit_wcs_{}_stack.eps".format(band),bbox_inches="tight", pad_inches=0)
+plt.savefig("report/img/gauss_fit_wcs_{}_stack.eps".format(band),bbox_inches="tight", pad_inches=0)
 plt.show()
 plt.clf()
 
@@ -108,7 +108,8 @@ x_res, y_res  = np.meshgrid(x_res, y_res)
 stack = np.zeros((1000,1000))
 
 for image in unaligned_images:
-    cutout = wcs_cutout(image, size=10, proper_coords=proper_coords)
+    # For u and r bands, use size=10. For g band, size=15.
+    cutout = wcs_cutout(image, size=15, proper_coords=proper_coords)
     initial_guess = get_gauss_guess(cutout)
     # plt.imshow(cutout, cmap='viridis', origin='lower', norm=LogNorm())
     # plt.contour(x_res, y_res, fitted_data, 7, colors='r')
@@ -137,7 +138,8 @@ plt.title("Resampled Stack of J094511, {}-band".format(band))
 plt.savefig("report/img/J094511_{}_resampled_stack.eps".format(band), bbox_inches="tight", pad_inches=0)
 plt.show()
 plt.clf()
-"""
+
+
 steps = 249
 radii = np.linspace(2.0, 500.0, steps)
 total_counts = np.zeros(steps)
@@ -157,7 +159,7 @@ for i in range(steps):
     annulus_area[i] = np.pi*(radii[i]**2 - (radii[i]-2.0)**2)
     counts_per_area[i] = annulus_counts[i] / annulus_area[i]
 print()
-"""
+
 
 """
 
@@ -234,13 +236,11 @@ print()
 # plt.savefig("report/img/J094511_{}_annulus_area.png".format(band), bbox_inches="tight", pad_inches=0)
 # plt.show()
 
-"""
 
-plt.plot(radii, counts_per_area/np.max(counts_per_area), 'r-')
-plt.plot(radii, psf_unnormalised/np.max(psf_unnormalised), 'b-')
-plt.title("Flux in Annulus (J094511 Profile)")
+
+plt.plot(radii, counts_per_area, 'r-')
+# plt.plot(radii, psf_unnormalised/np.max(psf_unnormalised), 'b-')
+plt.title("J094511 Radial Profile, SDSS $g'$")
 plt.savefig("report/img/J094511_{}_annulus_flux.eps".format(band), bbox_inches="tight", pad_inches=0)
 # plt.savefig("report/img/J094511_{}_annulus_flux.png".format(band), bbox_inches="tight", pad_inches=0)
 plt.show()
-
-"""

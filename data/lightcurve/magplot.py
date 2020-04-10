@@ -4,7 +4,14 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from math import *
-from astropy.io import ascii 
+from astropy.io import ascii
+
+# Force fonts to be nice.
+from matplotlib import rc
+rc('font',**{'family':'sans-serif','sans-serif':['Computer Modern Sans serif']})
+rc('font',**{'family':'serif','serif':['Computer Modern Roman']})
+rc('text', usetex=True)
+plt.rcParams.update({'font.size': 16})
 
 #%% info parameters
 name='J094511'
@@ -19,30 +26,30 @@ magmax=19.0
 Voff=0.3  # offset for CRTS to g-band
 
 #%% read in data from txt files
-LT=ascii.read("lc4-LT.txt")  
+LT=ascii.read("lc4-LT.txt")
 tLT=LT['MJD']
 gLT=LT['g']
 rLT=LT['r']
 gLTerr=LT['gerr']
 rLTerr=LT['rerr']
 
-dvog=ascii.read('lc4-dvo-g.txt')  
+dvog=ascii.read('lc4-dvo-g.txt')
 tdvog=dvog['MJD']
 gdvo=dvog['mag']
 gdvoerr=dvog['magerr']
 
-dvor=ascii.read('lc4-dvo-r.txt')  
+dvor=ascii.read('lc4-dvo-r.txt')
 tdvor=dvor['MJD']
 rdvo=dvor['mag']
 rdvoerr=dvor['magerr']
 
-crts=ascii.read('lc4-crts.txt')  
+crts=ascii.read('lc4-crts.txt')
 tcrts=crts['MJD']
 Vcrts=crts['V']
 gcrts=Vcrts+Voff
 gcrtserr=crts['Verr'] # note use Verr as gerr
 
-sdss=ascii.read('lc4-sdr9.txt')  
+sdss=ascii.read('lc4-sdr9.txt')
 tsdss=sdss['MJD']
 gsdss=sdss['g']
 gsdsserr=sdss['gerr']
@@ -79,11 +86,6 @@ ax1.errorbar(tcrts,gcrts,fmt='o',yerr=gcrtserr)
 for i in range(0,len(tspec)):
     ax1.plot([tspec[i],tspec[i]],[magmin,magmax],'k--')
 
-
+plt.xlim([53000, 59000])
+plt.savefig("J094511_magnitudes.eps", bbox_inches="tight", pad_inches=0)
 plt.show()
-
-
-
-
-
-

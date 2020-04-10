@@ -37,10 +37,11 @@ from astropy.io import fits
 from os import walk
 
 # Force fonts to be nice.
-# from matplotlib import rc
-# rc('font',**{'family':'sans-serif','sans-serif':['Computer Modern Sans serif']})
-# rc('font',**{'family':'serif','serif':['Computer Modern Roman']})
-# rc('text', usetex=True)
+from matplotlib import rc
+rc('font',**{'family':'sans-serif','sans-serif':['Computer Modern Sans serif']})
+rc('font',**{'family':'serif','serif':['Computer Modern Roman']})
+rc('text', usetex=True)
+plt.rcParams.update({'font.size': 18})
 
 def load_fits(**kwargs):
     """
