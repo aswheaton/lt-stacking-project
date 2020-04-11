@@ -135,7 +135,10 @@ dmypy.json
 *.blg
 *.aux
 *.log
+*.nav
+*.out
 *.run.xml
+*.snm
 *.toc
 
 # Don't commit the SHP template to tree.
